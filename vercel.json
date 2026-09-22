@@ -1,4 +1,5 @@
 {
+  "devCommand": "astro dev --port $PORT",
   "functions": {
     "api/card.ts": {
       "maxDuration": 10
