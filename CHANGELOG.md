@@ -2,6 +2,13 @@
 
 All notable changes to this project are documented in this file.
 
+## [2.0.1] - 2026-09-22
+
+### Fixed
+
+- The date field no longer sticks out of its contribution row on iOS Safari
+- Builder inputs and selects share one height
+
 ## [2.0.0] - 2026-09-22
 
 ### Changed
