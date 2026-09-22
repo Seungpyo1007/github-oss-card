@@ -1,9 +1,11 @@
 ---
 import '../styles/global.css';
+import { MAX_ITEMS } from '../contributions.js';
 
-const title = 'GitHub OSS Card — Show your open source contributions';
-const description = 'A live SVG card of the pull requests you got merged into other people’s projects, for your GitHub README.';
+const title = 'GitHub OSS Card — Show off your open source contributions';
+const description = 'Build an animated SVG card of your open source pull requests for your GitHub README. No token, no sign-in.';
 const origin = 'https://github-oss-card.vercel.app';
+const keywords = ['Merged PRs', 'Open source', 'GitHub README', 'Animated SVG', 'Stars', 'Themes', 'No token', 'Profile card'];
 ---
 
 <!doctype html>
@@ -21,6 +23,7 @@ const origin = 'https://github-oss-card.vercel.app';
     <title>{title}</title>
   </head>
   <body>
+    <div class="cursor-glow" aria-hidden="true"></div>
     <div class="ambient ambient-one" aria-hidden="true"></div>
     <div class="ambient ambient-two" aria-hidden="true"></div>
 
@@ -35,86 +38,117 @@ const origin = 'https://github-oss-card.vercel.app';
     </header>
 
     <main class="shell">
-      <section class="hero">
+      <section class="hero" aria-labelledby="page-title">
         <p class="eyebrow">OPEN SOURCE · SVG CARD</p>
-        <h1><span>Your merged PRs,</span><span class="gradient-text">on your profile.</span></h1>
+        <h1 id="page-title"><span>Your merged PRs,</span><span class="gradient-text">on your profile.</span></h1>
         <p class="hero-copy">
-          Pull requests you landed in other people’s projects, found automatically and drawn as one card.
-          Your own repositories and organizations are left out.
+          List the pull requests you are proud of, style the card, and paste one line into your GitHub README.
         </p>
+        <div class="hero-metrics" aria-label="Project highlights">
+          <span><strong>{MAX_ITEMS}</strong><small>contributions per card</small></span>
+          <span><strong>3</strong><small>themes</small></span>
+          <span><strong>0</strong><small>tokens needed</small></span>
+        </div>
+        <div class="keyword-marquee" aria-hidden="true">
+          <div class="marquee-track">
+            {[0, 1].map(() => keywords.map((keyword) => (<><span>{keyword}</span><i>◆</i></>)))}
+          </div>
+        </div>
       </section>
 
-      <section class="panel" aria-labelledby="builder-title">
-        <h2 id="builder-title">Build your card</h2>
-        <form class="field-grid" id="builder">
-          <label class="field">GitHub username
-            <input name="username" value="Seungpyo1007" autocomplete="off" spellcheck="false" required pattern="[A-Za-z0-9-]{1,39}" />
+      <div class="workspace">
+        <div class="editor-column">
+          <section class="panel reveal" aria-labelledby="style-title">
+            <p class="step-label">STEP 1</p>
+            <h2 id="style-title">Style</h2>
+            <div class="field-grid">
+              <label class="field field-wide">Card title
+                <input id="title" value="Open Source Contributions" maxlength="48" autocomplete="off" />
+              </label>
+              <div class="field field-wide">Theme
+                <div class="segmented" role="radiogroup" aria-label="Theme">
+                  <label><input type="radio" name="theme" value="shiny" checked /><span><i class="swatch swatch-shiny"></i>shiny</span></label>
+                  <label><input type="radio" name="theme" value="github_dark" /><span><i class="swatch swatch-dark"></i>github_dark</span></label>
+                  <label><input type="radio" name="theme" value="light" /><span><i class="swatch swatch-light"></i>light</span></label>
+                </div>
+              </div>
+              <label class="toggle"><input type="checkbox" id="hide-title" /><span></span>Hide title</label>
+              <label class="toggle"><input type="checkbox" id="animation" checked /><span></span>Animation</label>
+            </div>
+          </section>
+
+          <section class="panel reveal" aria-labelledby="items-title">
+            <div class="panel-heading">
+              <div>
+                <p class="step-label">STEP 2</p>
+                <h2 id="items-title">Contributions</h2>
+              </div>
+              <span class="counter" id="counter"></span>
+            </div>
+            <ol class="item-list" id="item-list"></ol>
+            <button class="add-button" id="add-item" type="button"><span aria-hidden="true">＋</span> Add contribution</button>
+            <p class="hint">Only the repository is required. Everything is stored in the card URL, so nothing is saved on a server.</p>
+          </section>
+        </div>
+
+        <section class="panel preview-panel reveal" aria-labelledby="preview-title">
+          <p class="step-label">STEP 3</p>
+          <h2 id="preview-title">Preview &amp; copy</h2>
+          <div class="preview-stage" id="preview-stage">
+            <img id="preview" alt="Open source contributions card preview" />
+          </div>
+          <div class="output-field">
+            <input id="markdown" readonly aria-label="Markdown snippet" />
+            <button class="copy-button" id="copy" type="button">Copy</button>
+          </div>
+          <p class="hint">GitHub caches README images. Change <code>&amp;v=1</code> to <code>&amp;v=2</code> after editing to refresh it.</p>
+        </section>
+      </div>
+    </main>
+
+    <template id="item-template">
+      <li class="item">
+        <div class="item-header">
+          <span class="item-index"></span>
+          <div class="item-actions">
+            <button type="button" data-action="up" aria-label="Move up">↑</button>
+            <button type="button" data-action="down" aria-label="Move down">↓</button>
+            <button type="button" data-action="remove" aria-label="Remove">✕</button>
+          </div>
+        </div>
+        <div class="item-grid">
+          <label class="field item-repo">Repository
+            <input data-field="repo" placeholder="owner/repo" autocomplete="off" spellcheck="false" />
           </label>
-          <label class="field">Theme
-            <select name="theme">
-              <option value="shiny">shiny</option>
-              <option value="github_dark">github_dark</option>
-              <option value="light">light</option>
+          <label class="field">PR #
+            <input data-field="number" inputmode="numeric" placeholder="342" autocomplete="off" />
+          </label>
+          <label class="field item-title">Title
+            <input data-field="title" maxlength="100" placeholder="feat: what you changed" autocomplete="off" />
+          </label>
+          <label class="field">Stars
+            <input data-field="stars" inputmode="numeric" placeholder="29157" autocomplete="off" />
+          </label>
+          <label class="field">Date
+            <input data-field="date" type="date" />
+          </label>
+          <label class="field">Status
+            <select data-field="status">
+              <option value="merged">merged</option>
+              <option value="open">open</option>
             </select>
           </label>
-          <label class="field">Minimum stars
-            <input name="min_stars" type="number" min="0" value="10" />
-          </label>
-          <label class="field">Max items
-            <input name="limit" type="number" min="1" max="10" value="6" />
-          </label>
-        </form>
-      </section>
-
-      <section class="panel" aria-labelledby="preview-title">
-        <h2 id="preview-title">Preview</h2>
-        <div class="preview-stage">
-          <img id="preview" src="/api/card?username=Seungpyo1007" alt="Open source contributions card preview" />
         </div>
-        <div class="output-field" style="margin-top: 18px">
-          <input id="markdown" readonly aria-label="Markdown snippet" />
-          <button class="button-accent" id="copy" type="button">Copy</button>
-        </div>
-        <p class="hint">The card is cached for six hours. Add or change <code>&amp;v=2</code> in the URL to refresh it on GitHub.</p>
-      </section>
-    </main>
+      </li>
+    </template>
 
     <footer class="site-footer">
       MIT · Made by <a href="https://github.com/Seungpyo1007">Seungpyo1007</a> · Sibling of
       <a href="https://github-tech-stack-card.vercel.app">Tech Stack Card</a>
     </footer>
 
-    <script is:inline define:vars={{ origin }}>
-      const form = document.getElementById('builder');
-      const preview = document.getElementById('preview');
-      const markdown = document.getElementById('markdown');
-      const copy = document.getElementById('copy');
-      let timer;
-
-      function cardUrl() {
-        const data = new FormData(form);
-        const params = new URLSearchParams();
-        params.set('username', String(data.get('username') || 'Seungpyo1007').trim());
-        if (data.get('theme') !== 'shiny') params.set('theme', String(data.get('theme')));
-        if (data.get('min_stars') !== '10') params.set('min_stars', String(data.get('min_stars')));
-        if (data.get('limit') !== '6') params.set('limit', String(data.get('limit')));
-        return `${origin}/api/card?${params}`;
-      }
-
-      function update() {
-        const url = cardUrl();
-        markdown.value = `![Open source contributions](${url})`;
-        clearTimeout(timer);
-        timer = setTimeout(() => { preview.src = url.replace(origin, ''); }, 350);
-      }
-
-      form.addEventListener('input', update);
-      copy.addEventListener('click', async () => {
-        await navigator.clipboard.writeText(markdown.value);
-        copy.textContent = 'Copied';
-        setTimeout(() => { copy.textContent = 'Copy'; }, 1400);
-      });
-      update();
+    <script>
+      import '../ui/builder.js';
     </script>
   </body>
 </html>
