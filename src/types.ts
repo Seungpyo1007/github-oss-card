@@ -14,24 +14,21 @@ export interface RenderOptions {
 }
 
 export interface CardRequestOptions extends RenderOptions {
-  exclude: Set<string>;
-  limit: number;
-  minStars: number;
-  username: string;
+  itemsToken: string | null;
 }
 
-export interface PullRequest {
-  mergedAt: string;
-  number: number;
-  owner: string;
-  private: boolean;
+export type ContributionStatus = 'merged' | 'open';
+
+export interface Contribution {
+  date?: string;
+  number?: number;
   repo: string;
-  stars: number;
-  title: string;
-  url: string;
+  stars?: number;
+  status: ContributionStatus;
+  title?: string;
 }
 
-export interface Contributions {
-  organizations: string[];
-  pullRequests: PullRequest[];
+export interface ContributionsConfigV1 {
+  v: 1;
+  items: Contribution[];
 }
