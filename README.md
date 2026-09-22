@@ -4,39 +4,43 @@
 
 # GitHub OSS Card
 
-A live SVG card of the pull requests you got merged into other people's open source projects.
+An animated SVG card of the open source pull requests you are proud of, for your GitHub profile README.
 
 <a href="https://github.com/Seungpyo1007/github-oss-card/actions/workflows/ci.yml"><img src="https://github.com/Seungpyo1007/github-oss-card/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
 <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-89CFF0" alt="MIT License" /></a>
 <a href="https://github-oss-card.vercel.app"><img src="https://img.shields.io/badge/demo-live-CBAACB" alt="Live demo" /></a>
 
-[Open the builder](https://github-oss-card.vercel.app/) · [Live card](https://github-oss-card.vercel.app/api/card?username=Seungpyo1007&v=1) · [API options](#api-options) · [Self-hosting](#self-hosting) · [Contributing](#contributing)
+[Open the builder](https://github-oss-card.vercel.app/) · [Live card](https://github-oss-card.vercel.app/api/card?v=1) · [API options](#api-options) · [Self-hosting](#self-hosting) · [Contributing](#contributing)
 
 </div>
 
 <p align="center">
   <img
-    src="https://github-oss-card.vercel.app/api/card?username=Seungpyo1007&v=1"
+    src="https://github-oss-card.vercel.app/api/card?v=1"
     width="94%"
-    alt="Seungpyo1007 open source contributions"
+    alt="Example open source contributions card"
   />
 </p>
 
 ## Features
 
-- Finds merged pull requests automatically with the GitHub GraphQL search API.
-- Leaves out your own account and organizations, so only work in other people's projects is shown.
-- Hides low-star repositories by default (`min_stars`) and lets you exclude any repository.
+- Visual builder: add up to 10 contributions, reorder them, and see the card update live.
+- Each row takes a repository plus optional PR number, title, star count, date and status (`merged` or `open`).
+- Everything is encoded in the card URL. No sign-in, no token, nothing stored on a server.
 - Vertical, animated layout with the same themes as [Tech Stack Card](https://github.com/Seungpyo1007/github-tech-stack-card).
 - Self-contained SVG: no external images, so it renders through GitHub's image proxy.
 
 ## Quick start
 
+1. Open the [builder](https://github-oss-card.vercel.app/).
+2. Fill in your contributions and pick a style.
+3. Copy the Markdown line into your README:
+
 ```md
-![Open source contributions](https://github-oss-card.vercel.app/api/card?username=YOUR_USERNAME)
+![Open source contributions](https://github-oss-card.vercel.app/api/card?items=...&v=1)
 ```
 
-Or pick options in the [builder](https://github-oss-card.vercel.app/) and copy the snippet.
+Without `items`, the API renders an example card.
 
 ## API options
 
@@ -44,17 +48,37 @@ Or pick options in the [builder](https://github-oss-card.vercel.app/) and copy t
 
 | Parameter | Default | Description |
 |---|---|---|
-| `username` | `Seungpyo1007` | GitHub login |
-| `min_stars` | `10` | Hide repositories with fewer stars (0 – 1,000,000) |
-| `limit` | `6` | Maximum number of pull requests (1 – 10) |
-| `exclude` | | Comma-separated `owner/repo` list to hide |
+| `items` | example card | Contributions token made by the builder (see below) |
 | `theme` | `shiny` | `shiny`, `github_dark`, `light` |
 | `title` | `Open Source Contributions` | Card title, up to 48 characters |
 | `hide_title` | `false` | Hide the header line |
 | `animation` | `true` | `false` disables motion |
 | `bg_color`, `border_color`, `title_color`, `text_color`, `tile_color` | theme | 3 or 6 digit hex, with or without `#` |
 
-Pull requests are sorted by repository stars, then by merge date.
+### The `items` token
+
+`items` is base64url-encoded JSON. The builder writes it for you, but you can also make one yourself:
+
+```json
+{
+  "v": 1,
+  "items": [
+    { "repo": "ahujasid/mcp-for-blender", "number": 342, "title": "feat: Pro account toggle", "stars": 29157, "date": "2026-09-15", "status": "merged" },
+    { "repo": "python/python-docs-ko", "number": 1199 }
+  ]
+}
+```
+
+| Field | Required | Rule |
+|---|---|---|
+| `repo` | yes | `owner/name` |
+| `number` | no | PR number, 1 or more |
+| `title` | no | Up to 100 characters |
+| `stars` | no | Whole number, shown as `29.2k` |
+| `date` | no | `YYYY-MM-DD` |
+| `status` | no | `merged` (default) or `open` |
+
+A token holds 1 to 10 items. An invalid token returns an error card with status 400.
 
 ## Themes
 
@@ -66,27 +90,21 @@ Pull requests are sorted by repository stars, then by merge date.
 
 ## Caching
 
-Cards are cached for 6 hours at the CDN (errors for 1 minute). GitHub also caches README images, so change a
-throwaway parameter such as `&v=2` to force a refresh.
+Cards are cached for 6 hours at the CDN. GitHub also caches README images, so after editing your card
+change a throwaway parameter such as `&v=1` to `&v=2`.
 
 ## Development
 
 ```bash
 pnpm install
-pnpm check      # lint, typecheck, tests, build
-pnpm dev        # vercel dev: site + API
+pnpm check        # lint, typecheck, tests, build
+pnpm dev          # Astro site only
+pnpm dev:vercel   # site + /api/card through vercel dev
 ```
-
-`pnpm dev` needs a `GITHUB_TOKEN` in `.env` (see below).
 
 ## Self-hosting
 
-1. Fork this repository and import it into Vercel.
-2. Create a fine-grained personal access token with **public repository read-only** access. No extra
-   permissions are needed.
-3. Add it as the `GITHUB_TOKEN` environment variable in Vercel and redeploy.
-
-The token only reads public search results. It is never sent to the browser.
+Fork this repository and import it into Vercel. No environment variables are needed.
 
 ## Contributing
 
