@@ -1,4 +1,4 @@
-import type { Contribution, ContributionsConfigV1 } from './types.js';
+import type { Contribution, ContributionStatus, ContributionsConfigV1 } from './types.js';
 
 export const MAX_ITEMS = 10;
 export const MAX_TOKEN_LENGTH = 4096;
@@ -6,6 +6,7 @@ export const MAX_TITLE_LENGTH = 100;
 
 const repoPattern = /^[A-Za-z0-9-]{1,39}\/[A-Za-z0-9._-]{1,100}$/;
 const datePattern = /^\d{4}-\d{2}-\d{2}$/;
+const statusValues = new Set<unknown>(['merged', 'open', 'closed', 'draft'] satisfies ContributionStatus[]);
 
 // Shown when no `items` token is given, and used as the builder's starting point.
 export const sampleContributions: Contribution[] = [
@@ -51,8 +52,8 @@ function validateItem(value: unknown): Contribution | null {
 
   const item: Contribution = { repo: candidate.repo, status: 'merged' };
   if (candidate.status !== undefined) {
-    if (candidate.status !== 'merged' && candidate.status !== 'open') return null;
-    item.status = candidate.status;
+    if (!statusValues.has(candidate.status)) return null;
+    item.status = candidate.status as ContributionStatus;
   }
   if (candidate.number !== undefined) {
     if (!isInteger(candidate.number, 1, 99_999_999)) return null;

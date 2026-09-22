@@ -31,6 +31,11 @@ describe('contribution tokens', () => {
     expect(decoded.ok && decoded.items[0]?.title).toBe('bz2 모듈 번역');
   });
 
+  it('accepts every pull request state', () => {
+    const items = (['merged', 'open', 'closed', 'draft'] as const).map((status) => ({ repo: 'a/b', status }));
+    expect(decodeContributions(encodeContributions(items))).toEqual({ ok: true, items });
+  });
+
   it('rejects malformed input', () => {
     expect(decodeContributions('not-base64-json').ok).toBe(false);
     expect(decodeContributions('a'.repeat(MAX_TOKEN_LENGTH + 1)).ok).toBe(false);
@@ -38,7 +43,7 @@ describe('contribution tokens', () => {
     expect(() => encodeContributions([{ repo: 'not a repo', status: 'merged' }])).toThrow();
     expect(() => encodeContributions([{ number: 0, repo: 'a/b', status: 'merged' }])).toThrow();
     expect(() => encodeContributions([{ date: '15/09/2026', repo: 'a/b', status: 'merged' }])).toThrow();
-    expect(() => encodeContributions([{ repo: 'a/b', status: 'closed' as 'merged' }])).toThrow();
+    expect(() => encodeContributions([{ repo: 'a/b', status: 'reopened' as 'merged' }])).toThrow();
     const tooMany = Array.from({ length: MAX_ITEMS + 1 }, (_, index) => ({ repo: `a/r${index}`, status: 'merged' as const }));
     expect(() => encodeContributions(tooMany)).toThrow();
   });
