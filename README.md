@@ -25,7 +25,8 @@ An animated SVG card of the open source pull requests you are proud of, for your
 ## Features
 
 - Visual builder: add up to 10 contributions, reorder them, and see the card update live.
-- Each row takes a repository plus optional PR number, title, star count, date and status (`merged` or `open`).
+- Each row takes a repository plus optional PR number, title, star count, date and status.
+- GitHub-style state badges with Octicons: Merged, Open, Closed and Draft.
 - Everything is encoded in the card URL. No sign-in, no token, nothing stored on a server.
 - Vertical, animated layout with the same themes as [Tech Stack Card](https://github.com/Seungpyo1007/github-tech-stack-card).
 - Self-contained SVG: no external images, so it renders through GitHub's image proxy.
@@ -76,7 +77,7 @@ Without `items`, the API renders an example card.
 | `title` | no | Up to 100 characters |
 | `stars` | no | Whole number, shown as `29.2k` |
 | `date` | no | `YYYY-MM-DD` |
-| `status` | no | `merged` (default) or `open` |
+| `status` | no | `merged` (default), `open`, `closed` or `draft` |
 
 A token holds 1 to 10 items. An invalid token returns an error card with status 400.
 
@@ -114,3 +115,5 @@ requests against `develop`. Releases are cut from `release/*` into `main`.
 ## License
 
 [MIT](LICENSE)
+
+State icons are [GitHub Octicons](https://github.com/primer/octicons) (MIT).
