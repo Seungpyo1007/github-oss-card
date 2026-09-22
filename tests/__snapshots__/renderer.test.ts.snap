@@ -14,21 +14,36 @@ exports[`SVG card renderer > lists every contribution vertically 1`] = `
   <rect x="28" y="86" width="4" height="46" rx="2" fill="#CBAACB"/>
   <text x="52" y="103" fill="#FFFFFF" font-family="Segoe UI, Arial, sans-serif" font-size="17" font-weight="700">ahujasid/mcp-for-blender<tspan fill="#89CFF0" font-weight="600" dx="10">★ 29.2k</tspan></text>
   <text x="52" y="128" fill="#FFFFFF" fill-opacity="0.72" font-family="Segoe UI, Arial, sans-serif" font-size="14"><tspan fill="#CBAACB" font-weight="700">#344</tspan> feat: export_scene command and MCP tool</text>
-  <text x="912" y="103" text-anchor="end" fill="#CBAACB" font-family="ui-monospace, SFMono-Regular, Consolas, monospace" font-size="12">MERGED 2026-09-16</text>
+  <g class="status-badge">
+    <rect x="822" y="86" width="90" height="24" rx="12" fill="#8957E5"/>
+    <path transform="translate(833 91) scale(0.875)" fill="#FFFFFF" d="M5.45 5.154A4.25 4.25 0 0 0 9.25 7.5h1.378a2.251 2.251 0 1 1 0 1.5H9.25A5.734 5.734 0 0 1 5 7.123v3.505a2.25 2.25 0 1 1-1.5 0V5.372a2.25 2.25 0 1 1 1.95-.218ZM4.25 13.5a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Zm8.5-4.5a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5ZM5 3.25a.75.75 0 1 0 0 .005V3.25Z"/>
+    <text x="853" y="102.5" fill="#FFFFFF" font-family="Segoe UI, Arial, sans-serif" font-size="12" font-weight="700">Merged</text>
+  </g>
+  <text x="912" y="128" text-anchor="end" fill="#FFFFFF" fill-opacity="0.55" font-family="ui-monospace, SFMono-Regular, Consolas, monospace" font-size="12">2026-09-16</text>
 </g>
 <g>
   <rect x="28" y="158" width="904" height="74" rx="12" fill="#132238"/>
   <rect x="28" y="172" width="4" height="46" rx="2" fill="#89CFF0"/>
   <text x="52" y="189" fill="#FFFFFF" font-family="Segoe UI, Arial, sans-serif" font-size="17" font-weight="700">ahujasid/mcp-for-blender<tspan fill="#89CFF0" font-weight="600" dx="10">★ 29.2k</tspan></text>
   <text x="52" y="214" fill="#FFFFFF" fill-opacity="0.72" font-family="Segoe UI, Arial, sans-serif" font-size="14"><tspan fill="#CBAACB" font-weight="700">#342</tspan> feat: International (Pro) account toggle for Hunyuan3D</text>
-  <text x="912" y="189" text-anchor="end" fill="#CBAACB" font-family="ui-monospace, SFMono-Regular, Consolas, monospace" font-size="12">MERGED 2026-09-15</text>
+  <g class="status-badge">
+    <rect x="822" y="172" width="90" height="24" rx="12" fill="#8957E5"/>
+    <path transform="translate(833 177) scale(0.875)" fill="#FFFFFF" d="M5.45 5.154A4.25 4.25 0 0 0 9.25 7.5h1.378a2.251 2.251 0 1 1 0 1.5H9.25A5.734 5.734 0 0 1 5 7.123v3.505a2.25 2.25 0 1 1-1.5 0V5.372a2.25 2.25 0 1 1 1.95-.218ZM4.25 13.5a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Zm8.5-4.5a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5ZM5 3.25a.75.75 0 1 0 0 .005V3.25Z"/>
+    <text x="853" y="188.5" fill="#FFFFFF" font-family="Segoe UI, Arial, sans-serif" font-size="12" font-weight="700">Merged</text>
+  </g>
+  <text x="912" y="214" text-anchor="end" fill="#FFFFFF" fill-opacity="0.55" font-family="ui-monospace, SFMono-Regular, Consolas, monospace" font-size="12">2026-09-15</text>
 </g>
 <g>
   <rect x="28" y="244" width="904" height="74" rx="12" fill="#132238"/>
   <rect x="28" y="258" width="4" height="46" rx="2" fill="#CBAACB"/>
   <text x="52" y="275" fill="#FFFFFF" font-family="Segoe UI, Arial, sans-serif" font-size="17" font-weight="700">python/python-docs-ko<tspan fill="#89CFF0" font-weight="600" dx="10">★ 77</tspan></text>
   <text x="52" y="300" fill="#FFFFFF" fill-opacity="0.72" font-family="Segoe UI, Arial, sans-serif" font-size="14"><tspan fill="#CBAACB" font-weight="700">#1199</tspan> Translate library/bz2 into Korean</text>
-  <text x="912" y="275" text-anchor="end" fill="#CBAACB" font-family="ui-monospace, SFMono-Regular, Consolas, monospace" font-size="12">MERGED 2026-08-20</text>
+  <g class="status-badge">
+    <rect x="822" y="258" width="90" height="24" rx="12" fill="#8957E5"/>
+    <path transform="translate(833 263) scale(0.875)" fill="#FFFFFF" d="M5.45 5.154A4.25 4.25 0 0 0 9.25 7.5h1.378a2.251 2.251 0 1 1 0 1.5H9.25A5.734 5.734 0 0 1 5 7.123v3.505a2.25 2.25 0 1 1-1.5 0V5.372a2.25 2.25 0 1 1 1.95-.218ZM4.25 13.5a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Zm8.5-4.5a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5ZM5 3.25a.75.75 0 1 0 0 .005V3.25Z"/>
+    <text x="853" y="274.5" fill="#FFFFFF" font-family="Segoe UI, Arial, sans-serif" font-size="12" font-weight="700">Merged</text>
+  </g>
+  <text x="912" y="300" text-anchor="end" fill="#FFFFFF" fill-opacity="0.55" font-family="ui-monospace, SFMono-Regular, Consolas, monospace" font-size="12">2026-08-20</text>
 </g>
 </svg>"
 `;
