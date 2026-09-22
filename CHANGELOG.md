@@ -2,6 +2,22 @@
 
 All notable changes to this project are documented in this file.
 
+## [2.0.0] - 2026-09-22
+
+### Changed
+
+- **Breaking:** the card is built from contributions you enter yourself, passed as the `items` token, instead of GitHub search. `username`, `min_stars`, `limit` and `exclude` are removed and no `GITHUB_TOKEN` is needed.
+- Rows show whatever fields are given: repository, PR number, title, stars, date and `merged` / `open` status.
+
+### Added
+
+- Builder homepage with editable, reorderable rows, theme swatches, toggles and a live preview
+- Keyword marquee, hero metrics, cursor glow and scroll reveal on the homepage
+
+### Fixed
+
+- `vercel dev` no longer invokes itself recursively
+
 ## [1.0.0] - 2026-09-22
 
 ### Added
