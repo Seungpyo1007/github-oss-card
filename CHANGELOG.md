@@ -2,6 +2,16 @@
 
 All notable changes to this project are documented in this file.
 
+## [2.0.2] - 2026-09-22
+
+### Changed
+
+- Pull request state is shown as a GitHub-style badge with the matching Octicon instead of plain text
+
+### Added
+
+- `closed` and `draft` states
+
 ## [2.0.1] - 2026-09-22
 
 ### Fixed
