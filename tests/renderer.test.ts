@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest';
 import { sampleContributions } from '../src/contributions.js';
 import { parseCardOptions } from '../src/options.js';
 import { formatStars, renderCard, renderErrorCard } from '../src/render/card.js';
+import { statusStyles } from '../src/render/status.js';
 
 const options = parseCardOptions({ animation: 'false' });
 
@@ -22,7 +23,8 @@ describe('SVG card renderer', () => {
     expect(svg).toContain('ahujasid/mcp-for-blender');
     expect(svg).toContain('#1199');
     expect(svg).toContain('★ 29.2k');
-    expect(svg).toContain('MERGED 2026-09-15');
+    expect(svg).toContain('>Merged<');
+    expect(svg).toContain('>2026-09-15<');
     expect(svg).toContain('3 CONTRIBUTIONS · 2 REPOS');
     expect(svg).toMatchSnapshot();
   });
@@ -30,7 +32,7 @@ describe('SVG card renderer', () => {
   it('renders minimal and open items', () => {
     const svg = renderCard([{ repo: 'octocat/hello-world', status: 'open' }], options);
     expect(XMLValidator.validate(svg)).toBe(true);
-    expect(svg).toContain('>OPEN<');
+    expect(svg).toContain('>Open<');
     expect(svg).not.toContain('★');
     expect(svg).not.toMatch(/>#\d/);
   });
@@ -46,6 +48,15 @@ describe('SVG card renderer', () => {
     expect(XMLValidator.validate(renderCard([], options))).toBe(true);
     expect(renderCard([], options)).toContain('No contributions yet');
     expect(renderErrorCard('Invalid contributions', options.theme)).toContain('Invalid contributions');
+  });
+
+  it.each(Object.entries(statusStyles))('draws the %s badge with its icon and colour', (status, style) => {
+    const svg = renderCard([{ date: '2026-01-02', repo: 'a/b', status: status as keyof typeof statusStyles }], options);
+    expect(XMLValidator.validate(svg)).toBe(true);
+    expect(svg).toContain(`fill="${style.color}"`);
+    expect(svg).toContain(style.path);
+    expect(svg).toContain(`>${style.label}<`);
+    expect(svg).toContain('>2026-01-02<');
   });
 
   it('formats star counts', () => {
