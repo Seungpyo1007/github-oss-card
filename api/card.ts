@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
-import { fetchContributions, GitHubError, selectContributions } from '../src/github.js';
+import { decodeContributions, sampleContributions } from '../src/contributions.js';
 import { parseCardOptions } from '../src/options.js';
 import { renderCard, renderErrorCard } from '../src/render/card.js';
 
@@ -20,13 +20,7 @@ function applyHeaders(response: VercelResponse): void {
   response.setHeader('Access-Control-Allow-Origin', '*');
 }
 
-// Errors should not stick in the CDN for six hours.
-function shortCache(response: VercelResponse): void {
-  response.setHeader('CDN-Cache-Control', 'max-age=60');
-  response.setHeader('Vercel-CDN-Cache-Control', 'max-age=60');
-}
-
-export default async function handler(request: VercelRequest, response: VercelResponse): Promise<void> {
+export default function handler(request: VercelRequest, response: VercelResponse): void {
   const options = parseCardOptions(request.query);
   applyHeaders(response);
 
@@ -36,20 +30,15 @@ export default async function handler(request: VercelRequest, response: VercelRe
     return;
   }
 
-  const token = process.env.GITHUB_TOKEN;
-  if (!token) {
-    shortCache(response);
-    response.status(500).send(renderErrorCard('GITHUB_TOKEN is not configured', options.theme));
-    return;
+  let items = sampleContributions;
+  if (options.itemsToken) {
+    const decoded = decodeContributions(options.itemsToken);
+    if (!decoded.ok) {
+      response.status(400).send(renderErrorCard(decoded.error, options.theme));
+      return;
+    }
+    items = decoded.items;
   }
 
-  try {
-    const contributions = await fetchContributions(options.username, token);
-    response.status(200).send(renderCard(selectContributions(contributions, options), options));
-  } catch (error) {
-    shortCache(response);
-    const status = error instanceof GitHubError ? error.status : 502;
-    const message = error instanceof GitHubError ? error.message : 'Could not reach GitHub';
-    response.status(status).send(renderErrorCard(message, options.theme));
-  }
+  response.status(200).send(renderCard(items, options));
 }
