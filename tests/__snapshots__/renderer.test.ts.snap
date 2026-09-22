@@ -1,33 +1,33 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
 exports[`SVG card renderer > lists every contribution vertically 1`] = `
-"<svg xmlns="http://www.w3.org/2000/svg" width="960" height="346" viewBox="0 0 960 346" role="img" aria-label="Open Source Contributions: 3 merged PRs · 2 repos">
-<title>Open Source Contributions: 3 merged PRs · 2 repos</title>
+"<svg xmlns="http://www.w3.org/2000/svg" width="960" height="346" viewBox="0 0 960 346" role="img" aria-label="Open Source Contributions: 3 contributions · 2 repos">
+<title>Open Source Contributions: 3 contributions · 2 repos</title>
 
 <rect x="1" y="1" width="958" height="344" rx="16" fill="#0F1B2A" stroke="#CBAACB" stroke-width="2"/>
 <g>
   <text x="28" y="44" fill="#89CFF0" font-family="Segoe UI, Arial, sans-serif" font-size="22" font-weight="700">Open Source Contributions</text>
-  <text x="932" y="44" text-anchor="end" fill="#FFFFFF" fill-opacity="0.6" font-family="ui-monospace, SFMono-Regular, Consolas, monospace" font-size="12">3 MERGED PRS · 2 REPOS</text>
+  <text x="932" y="44" text-anchor="end" fill="#FFFFFF" fill-opacity="0.6" font-family="ui-monospace, SFMono-Regular, Consolas, monospace" font-size="12">3 CONTRIBUTIONS · 2 REPOS</text>
 </g>
 <g>
   <rect x="28" y="72" width="904" height="74" rx="12" fill="#132238"/>
   <rect x="28" y="86" width="4" height="46" rx="2" fill="#CBAACB"/>
   <text x="52" y="103" fill="#FFFFFF" font-family="Segoe UI, Arial, sans-serif" font-size="17" font-weight="700">ahujasid/mcp-for-blender<tspan fill="#89CFF0" font-weight="600" dx="10">★ 29.2k</tspan></text>
-  <text x="52" y="128" fill="#FFFFFF" fill-opacity="0.72" font-family="Segoe UI, Arial, sans-serif" font-size="14"><tspan fill="#CBAACB" font-weight="700">#344</tspan> feat: export_scene command and MCP tool (GLB/FBX to a caller-chosen pat…</text>
+  <text x="52" y="128" fill="#FFFFFF" fill-opacity="0.72" font-family="Segoe UI, Arial, sans-serif" font-size="14"><tspan fill="#CBAACB" font-weight="700">#344</tspan> feat: export_scene command and MCP tool</text>
   <text x="912" y="103" text-anchor="end" fill="#CBAACB" font-family="ui-monospace, SFMono-Regular, Consolas, monospace" font-size="12">MERGED 2026-09-16</text>
 </g>
 <g>
   <rect x="28" y="158" width="904" height="74" rx="12" fill="#132238"/>
   <rect x="28" y="172" width="4" height="46" rx="2" fill="#89CFF0"/>
   <text x="52" y="189" fill="#FFFFFF" font-family="Segoe UI, Arial, sans-serif" font-size="17" font-weight="700">ahujasid/mcp-for-blender<tspan fill="#89CFF0" font-weight="600" dx="10">★ 29.2k</tspan></text>
-  <text x="52" y="214" fill="#FFFFFF" fill-opacity="0.72" font-family="Segoe UI, Arial, sans-serif" font-size="14"><tspan fill="#CBAACB" font-weight="700">#342</tspan> feat: International (Pro) account toggle for Hunyuan3D Official API</text>
+  <text x="52" y="214" fill="#FFFFFF" fill-opacity="0.72" font-family="Segoe UI, Arial, sans-serif" font-size="14"><tspan fill="#CBAACB" font-weight="700">#342</tspan> feat: International (Pro) account toggle for Hunyuan3D</text>
   <text x="912" y="189" text-anchor="end" fill="#CBAACB" font-family="ui-monospace, SFMono-Regular, Consolas, monospace" font-size="12">MERGED 2026-09-15</text>
 </g>
 <g>
   <rect x="28" y="244" width="904" height="74" rx="12" fill="#132238"/>
   <rect x="28" y="258" width="4" height="46" rx="2" fill="#CBAACB"/>
   <text x="52" y="275" fill="#FFFFFF" font-family="Segoe UI, Arial, sans-serif" font-size="17" font-weight="700">python/python-docs-ko<tspan fill="#89CFF0" font-weight="600" dx="10">★ 77</tspan></text>
-  <text x="52" y="300" fill="#FFFFFF" fill-opacity="0.72" font-family="Segoe UI, Arial, sans-serif" font-size="14"><tspan fill="#CBAACB" font-weight="700">#1199</tspan> #975 translate library/bz2.po</text>
+  <text x="52" y="300" fill="#FFFFFF" fill-opacity="0.72" font-family="Segoe UI, Arial, sans-serif" font-size="14"><tspan fill="#CBAACB" font-weight="700">#1199</tspan> Translate library/bz2 into Korean</text>
   <text x="912" y="275" text-anchor="end" fill="#CBAACB" font-family="ui-monospace, SFMono-Regular, Consolas, monospace" font-size="12">MERGED 2026-08-20</text>
 </g>
 </svg>"

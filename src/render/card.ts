@@ -1,4 +1,4 @@
-import type { CardTheme, PullRequest, RenderOptions } from '../types.js';
+import type { CardTheme, Contribution, RenderOptions } from '../types.js';
 
 const CARD_WIDTH = 960;
 const PADDING = 28;
@@ -51,27 +51,31 @@ function renderAnimationStyles(enabled: boolean): string {
   </style>`;
 }
 
-function renderRow(pullRequest: PullRequest, index: number, top: number, options: RenderOptions): string {
+function renderRow(item: Contribution, index: number, top: number, options: RenderOptions): string {
   const { theme } = options;
   const motion = options.animated ? ` class="contribution-row" style="animation-delay:${140 + index * 90}ms"` : '';
   const width = CARD_WIDTH - PADDING * 2;
-  const merged = pullRequest.mergedAt.slice(0, 10);
+  const status = `${item.status.toUpperCase()}${item.date ? ` ${item.date}` : ''}`;
+  const stars = item.stars === undefined ? '' : `<tspan fill="${theme.accent}" font-weight="600" dx="10">★ ${formatStars(item.stars)}</tspan>`;
+  const number = item.number === undefined ? '' : `<tspan fill="${theme.border}" font-weight="700">#${item.number}</tspan> `;
+  const detail = item.number === undefined && !item.title ? '' : `
+  <text x="${PADDING + 24}" y="${top + 56}" fill="${theme.text}" fill-opacity="0.72" font-family="${FONT}" font-size="14">${number}${escapeXml(truncate(item.title ?? '', MAX_TITLE_LENGTH))}</text>`;
+  const repoY = detail ? top + 31 : top + ROW_HEIGHT / 2 + 6;
   return `<g${motion}>
   <rect x="${PADDING}" y="${top}" width="${width}" height="${ROW_HEIGHT}" rx="12" fill="${theme.tile}"/>
   <rect x="${PADDING}" y="${top + 14}" width="4" height="${ROW_HEIGHT - 28}" rx="2" fill="${index % 2 === 0 ? theme.border : theme.accent}"/>
-  <text x="${PADDING + 24}" y="${top + 31}" fill="${theme.text}" font-family="${FONT}" font-size="17" font-weight="700">${escapeXml(pullRequest.repo)}<tspan fill="${theme.accent}" font-weight="600" dx="10">★ ${formatStars(pullRequest.stars)}</tspan></text>
-  <text x="${PADDING + 24}" y="${top + 56}" fill="${theme.text}" fill-opacity="0.72" font-family="${FONT}" font-size="14"><tspan fill="${theme.border}" font-weight="700">#${pullRequest.number}</tspan> ${escapeXml(truncate(pullRequest.title, MAX_TITLE_LENGTH))}</text>
-  <text x="${CARD_WIDTH - PADDING - 20}" y="${top + 31}" text-anchor="end" fill="${theme.border}" font-family="${MONO}" font-size="12">MERGED ${merged}</text>
+  <text x="${PADDING + 24}" y="${repoY}" fill="${theme.text}" font-family="${FONT}" font-size="17" font-weight="700">${escapeXml(item.repo)}${stars}</text>${detail}
+  <text x="${CARD_WIDTH - PADDING - 20}" y="${repoY}" text-anchor="end" fill="${item.status === 'open' ? theme.accent : theme.border}" font-family="${MONO}" font-size="12">${status}</text>
 </g>`;
 }
 
-export function renderCard(pullRequests: PullRequest[], options: RenderOptions): string {
+export function renderCard(items: Contribution[], options: RenderOptions): string {
   const { theme } = options;
   const top = options.hideTitle ? PADDING : HEADER_HEIGHT + 8;
-  const rows = pullRequests.length === 0 ? 1 : pullRequests.length;
+  const rows = items.length === 0 ? 1 : items.length;
   const height = top + rows * ROW_HEIGHT + (rows - 1) * ROW_GAP + PADDING;
-  const repositories = new Set(pullRequests.map((pullRequest) => pullRequest.repo)).size;
-  const summary = `${pullRequests.length} merged PR${pullRequests.length === 1 ? '' : 's'} · ${repositories} repo${repositories === 1 ? '' : 's'}`;
+  const repositories = new Set(items.map((item) => item.repo.toLowerCase())).size;
+  const summary = `${items.length} contribution${items.length === 1 ? '' : 's'} · ${repositories} repo${repositories === 1 ? '' : 's'}`;
   const label = escapeXml(`${options.title}: ${summary}`);
 
   const parts = [
@@ -91,13 +95,13 @@ export function renderCard(pullRequests: PullRequest[], options: RenderOptions):
 </g>`);
   }
 
-  if (pullRequests.length === 0) {
+  if (items.length === 0) {
     parts.push(
-      `<text x="${CARD_WIDTH / 2}" y="${top + ROW_HEIGHT / 2 + 6}" text-anchor="middle" fill="${theme.text}" fill-opacity="0.72" font-family="${FONT}" font-size="16">No merged pull requests to other projects yet</text>`,
+      `<text x="${CARD_WIDTH / 2}" y="${top + ROW_HEIGHT / 2 + 6}" text-anchor="middle" fill="${theme.text}" fill-opacity="0.72" font-family="${FONT}" font-size="16">No contributions yet</text>`,
     );
   }
-  pullRequests.forEach((pullRequest, index) => {
-    parts.push(renderRow(pullRequest, index, top + index * (ROW_HEIGHT + ROW_GAP), options));
+  items.forEach((item, index) => {
+    parts.push(renderRow(item, index, top + index * (ROW_HEIGHT + ROW_GAP), options));
   });
 
   parts.push('</svg>');

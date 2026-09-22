@@ -1,7 +1,8 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
 import handler from '../api/card.js';
+import { encodeContributions } from '../src/contributions.js';
 
 interface ResponseState {
   body: string;
@@ -32,38 +33,10 @@ function request(method: string, query: VercelRequest['query'] = {}): VercelRequ
   return { method, query } as VercelRequest;
 }
 
-const searchPayload = {
-  data: {
-    search: {
-      nodes: [
-        {
-          mergedAt: '2026-09-15T09:47:06Z',
-          number: 342,
-          repository: { isPrivate: false, nameWithOwner: 'ahujasid/mcp-for-blender', owner: { login: 'ahujasid' }, stargazerCount: 29157 },
-          title: 'feat: International (Pro) account toggle',
-          url: 'https://github.com/ahujasid/mcp-for-blender/pull/342',
-        },
-      ],
-      pageInfo: { endCursor: null, hasNextPage: false },
-    },
-    user: { organizations: { nodes: [] } },
-  },
-};
-
 describe('card API', () => {
-  beforeEach(() => {
-    vi.stubEnv('GITHUB_TOKEN', 'test-token');
-  });
-
-  afterEach(() => {
-    vi.unstubAllEnvs();
-    vi.unstubAllGlobals();
-  });
-
-  it('returns a cacheable SVG card', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify(searchPayload))));
+  it('renders the sample card without a token', () => {
     const { response, state } = mockResponse();
-    await handler(request('GET', { username: 'Seungpyo1007' }), response);
+    handler(request('GET'), response);
 
     expect(state.statusCode).toBe(200);
     expect(state.headers['Content-Type']).toBe('image/svg+xml; charset=utf-8');
@@ -71,26 +44,24 @@ describe('card API', () => {
     expect(state.body).toContain('ahujasid/mcp-for-blender');
   });
 
-  it('explains a missing token without caching it for long', async () => {
-    vi.stubEnv('GITHUB_TOKEN', '');
+  it('renders the items from the token', () => {
     const { response, state } = mockResponse();
-    await handler(request('GET'), response);
-    expect(state.statusCode).toBe(500);
-    expect(state.body).toContain('GITHUB_TOKEN is not configured');
-    expect(state.headers['Vercel-CDN-Cache-Control']).toBe('max-age=60');
+    handler(request('GET', { items: encodeContributions([{ number: 7, repo: 'octocat/hello-world', status: 'merged' }]) }), response);
+    expect(state.statusCode).toBe(200);
+    expect(state.body).toContain('octocat/hello-world');
+    expect(state.body).not.toContain('mcp-for-blender');
   });
 
-  it('maps upstream failures to 502', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('network down')));
+  it('returns an SVG error for a bad token', () => {
     const { response, state } = mockResponse();
-    await handler(request('GET'), response);
-    expect(state.statusCode).toBe(502);
-    expect(state.body).toContain('Could not reach GitHub');
+    handler(request('GET', { items: 'garbage' }), response);
+    expect(state.statusCode).toBe(400);
+    expect(state.body).toContain('Invalid contributions');
   });
 
-  it('rejects non-GET requests', async () => {
+  it('rejects non-GET requests', () => {
     const { response, state } = mockResponse();
-    await handler(request('POST'), response);
+    handler(request('POST'), response);
     expect(state.statusCode).toBe(405);
     expect(state.headers.Allow).toBe('GET');
   });

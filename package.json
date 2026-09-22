@@ -1,12 +1,12 @@
 {
   "name": "github-oss-card",
   "packageManager": "pnpm@11.16.0",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vercel dev",
-    "dev:web": "astro dev",
+    "dev": "astro dev",
+    "dev:vercel": "vercel dev",
     "build": "astro build",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit && astro check",
