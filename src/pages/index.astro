@@ -72,6 +72,12 @@ const keywords = ['Merged PRs', 'Open source', 'GitHub README', 'Animated SVG', 
                   <label><input type="radio" name="theme" value="light" /><span><i class="swatch swatch-light"></i>light</span></label>
                 </div>
               </div>
+              <div class="field field-wide">Layout
+                <div class="segmented" role="radiogroup" aria-label="Layout">
+                  <label><input type="radio" name="layout" value="rows" checked /><span>rows</span></label>
+                  <label><input type="radio" name="layout" value="compact" /><span>compact</span></label>
+                </div>
+              </div>
               <label class="toggle"><input type="checkbox" id="hide-title" /><span></span>Hide title</label>
               <label class="toggle"><input type="checkbox" id="animation" checked /><span></span>Animation</label>
             </div>
@@ -87,7 +93,7 @@ const keywords = ['Merged PRs', 'Open source', 'GitHub README', 'Animated SVG', 
             </div>
             <ol class="item-list" id="item-list"></ol>
             <button class="add-button" id="add-item" type="button"><span aria-hidden="true">＋</span> Add contribution</button>
-            <p class="hint">Only the repository is required. Everything is stored in the card URL, so nothing is saved on a server.</p>
+            <p class="hint">Only the repository is required. Press <strong>⟳</strong> to fill a row from GitHub. Star counts on the card are refreshed from GitHub automatically, so the number you enter is only a fallback.</p>
           </section>
         </div>
 
@@ -111,6 +117,7 @@ const keywords = ['Merged PRs', 'Open source', 'GitHub README', 'Animated SVG', 
         <div class="item-header">
           <span class="item-index"></span>
           <div class="item-actions">
+            <button type="button" data-action="fill" aria-label="Fill from GitHub" title="Fill from GitHub">⟳</button>
             <button type="button" data-action="up" aria-label="Move up">↑</button>
             <button type="button" data-action="down" aria-label="Move down">↓</button>
             <button type="button" data-action="remove" aria-label="Remove">✕</button>

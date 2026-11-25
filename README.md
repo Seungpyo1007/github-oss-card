@@ -26,8 +26,11 @@ An animated SVG card of the open source pull requests you are proud of, for your
 
 - Visual builder: add up to 10 contributions, reorder them, and see the card update live.
 - Each row takes a repository plus optional PR number, title, star count, date and status.
+- Star counts stay current: the card asks GitHub for the live number every time it is rendered.
+- `compact` layout for long lists: one line per contribution.
+- One-click **Fill from GitHub** in the builder pulls stars, title, date and state for a row.
 - GitHub-style state badges with Octicons: Merged, Open, Closed and Draft.
-- Everything is encoded in the card URL. No sign-in, no token, nothing stored on a server.
+- Everything is encoded in the card URL. No sign-in, nothing stored on a server.
 - Vertical, animated layout with the same themes as [Tech Stack Card](https://github.com/Seungpyo1007/github-tech-stack-card).
 - Self-contained SVG: no external images, so it renders through GitHub's image proxy.
 
@@ -51,9 +54,11 @@ Without `items`, the API renders an example card.
 |---|---|---|
 | `items` | example card | Contributions token made by the builder (see below) |
 | `theme` | `shiny` | `shiny`, `github_dark`, `light` |
+| `layout` | `rows` | `compact` puts each contribution on one line, roughly halving the card height |
 | `title` | `Open Source Contributions` | Card title, up to 48 characters |
 | `hide_title` | `false` | Hide the header line |
 | `animation` | `true` | `false` disables motion |
+| `live` | `true` | `false` shows the values in the token as they are, without asking GitHub |
 | `bg_color`, `border_color`, `title_color`, `text_color`, `tile_color` | theme | 3 or 6 digit hex, with or without `#` |
 
 ### The `items` token
@@ -75,11 +80,23 @@ Without `items`, the API renders an example card.
 | `repo` | yes | `owner/name` |
 | `number` | no | PR number, 1 or more |
 | `title` | no | Up to 100 characters |
-| `stars` | no | Whole number, shown as `29.2k` |
+| `stars` | no | Whole number, shown as `29.2k`. Replaced by the live count when GitHub answers |
 | `date` | no | `YYYY-MM-DD` |
 | `status` | no | `merged` (default), `open`, `closed` or `draft` |
 
 A token holds 1 to 10 items. An invalid token returns an error card with status 400.
+
+### Live data
+
+A token is a snapshot, so on its own the numbers in it would never change. When the card is rendered it
+therefore asks the GitHub API for fresh values:
+
+- **Stars** are refreshed for every item that has a `stars` field. Leave the field out to show no stars.
+- **Status** is refreshed for items with a `number`, but only when the deployment has a `GITHUB_TOKEN`
+  (see [Self-hosting](#self-hosting)).
+
+GitHub responses are cached in memory for 30 minutes. If GitHub is slow, rate limited or down, the card
+falls back to the values in the token instead of failing. Pass `live=false` to turn this off.
 
 ## Themes
 
@@ -91,8 +108,8 @@ A token holds 1 to 10 items. An invalid token returns an error card with status 
 
 ## Caching
 
-Cards are cached for 6 hours at the CDN. GitHub also caches README images, so after editing your card
-change a throwaway parameter such as `&v=1` to `&v=2`.
+Cards are cached for 6 hours at the CDN, so live star counts can lag by a few hours. GitHub also caches
+README images, so after editing your card change a throwaway parameter such as `&v=1` to `&v=2`.
 
 ## Development
 
@@ -105,7 +122,12 @@ pnpm dev:vercel   # site + /api/card through vercel dev
 
 ## Self-hosting
 
-Fork this repository and import it into Vercel. No environment variables are needed.
+Fork this repository and import it into Vercel. No environment variables are required.
+
+Setting `GITHUB_TOKEN` is recommended. Without it the card uses GitHub's unauthenticated API, which
+allows only 60 requests an hour per IP address and is shared with other apps on the same host, so star
+counts may fall back to the token values more often. A fine-grained token with no extra permissions
+(public read-only) is enough; it also turns on live pull request states.
 
 ## Contributing
 

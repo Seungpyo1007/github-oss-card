@@ -6,15 +6,19 @@ export interface CardTheme {
   tile: string;
 }
 
+export type CardLayout = 'rows' | 'compact';
+
 export interface RenderOptions {
   animated: boolean;
   hideTitle: boolean;
+  layout: CardLayout;
   theme: CardTheme;
   title: string;
 }
 
 export interface CardRequestOptions extends RenderOptions {
   itemsToken: string | null;
+  live: boolean;
 }
 
 export type ContributionStatus = 'merged' | 'open' | 'closed' | 'draft';

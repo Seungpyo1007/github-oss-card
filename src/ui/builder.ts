@@ -1,4 +1,5 @@
-import { encodeContributions, MAX_ITEMS, sampleContributions } from '../contributions.js';
+import { encodeContributions, MAX_ITEMS, MAX_TITLE_LENGTH, sampleContributions } from '../contributions.js';
+import { pullRequestStatus } from '../live.js';
 import type { Contribution, ContributionStatus } from '../types.js';
 
 interface Row {
@@ -64,6 +65,7 @@ function cardUrl(): string {
   if (items.length > 0) params.set('items', encodeContributions(items));
   const theme = document.querySelector<HTMLInputElement>('input[name="theme"]:checked')?.value ?? 'shiny';
   if (theme !== 'shiny') params.set('theme', theme);
+  if (document.querySelector<HTMLInputElement>('input[name="layout"]:checked')?.value === 'compact') params.set('layout', 'compact');
   const title = titleInput.value.trim();
   if (title && title !== defaultTitle) params.set('title', title);
   if (hideTitle.checked) params.set('hide_title', 'true');
@@ -124,12 +126,60 @@ list.addEventListener('input', (event) => {
   updateOutput();
 });
 
+async function githubJson(path: string): Promise<Record<string, unknown>> {
+  const response = await fetch(`https://api.github.com${path}`, { headers: { Accept: 'application/vnd.github+json' } });
+  if (response.status === 403 || response.status === 429) throw new Error('GitHub rate limit reached. Try again later.');
+  if (!response.ok) throw new Error(response.status === 404 ? 'Not found on GitHub.' : `GitHub returned ${response.status}.`);
+  return await response.json() as Record<string, unknown>;
+}
+
+// Fills the star count from the repository and, when a PR number is given,
+// the title, date and state from the pull request. Runs in the visitor's
+// browser, so it uses their own unauthenticated GitHub rate limit.
+async function fillFromGitHub(row: Row, button: HTMLButtonElement): Promise<void> {
+  const repo = row.repo.trim();
+  if (!repoPattern.test(repo)) {
+    list.querySelector<HTMLInputElement>(`[data-id="${row.id}"] [data-field="repo"]`)?.focus();
+    return;
+  }
+  button.disabled = true;
+  button.classList.add('is-busy');
+  try {
+    const number = Number.parseInt(row.number, 10);
+    const [repository, pull] = await Promise.all([
+      githubJson(`/repos/${repo}`),
+      number >= 1 ? githubJson(`/repos/${repo}/pulls/${number}`) : Promise.resolve(null),
+    ]);
+    if (typeof repository.stargazers_count === 'number') row.stars = String(repository.stargazers_count);
+    if (pull) {
+      if (typeof pull.title === 'string') row.title = [...pull.title].slice(0, MAX_TITLE_LENGTH).join('');
+      const date = pull.merged_at ?? pull.created_at;
+      if (typeof date === 'string') row.date = date.slice(0, 10);
+      row.status = pullRequestStatus(pull) ?? row.status;
+    }
+    renderRows();
+  } catch (error) {
+    button.disabled = false;
+    button.classList.remove('is-busy');
+    button.classList.add('is-error');
+    button.title = error instanceof Error ? error.message : 'Could not reach GitHub.';
+    window.setTimeout(() => {
+      button.classList.remove('is-error');
+      button.title = 'Fill from GitHub';
+    }, 4000);
+  }
+}
+
 list.addEventListener('click', (event) => {
   const button = (event.target as HTMLElement).closest<HTMLButtonElement>('button[data-action]');
   const item = button?.closest<HTMLLIElement>('.item');
   const index = rows.findIndex((row) => String(row.id) === item?.dataset.id);
   if (!button || !item || index < 0) return;
   const action = button.dataset.action;
+  if (action === 'fill') {
+    void fillFromGitHub(rows[index]!, button);
+    return;
+  }
   if (action === 'remove') {
     item.classList.add('is-leaving');
     item.addEventListener('animationend', () => {
@@ -152,7 +202,7 @@ addButton.addEventListener('click', () => {
   renderRows(row.id);
 });
 
-for (const control of [titleInput, hideTitle, animation, ...document.querySelectorAll<HTMLInputElement>('input[name="theme"]')]) {
+for (const control of [titleInput, hideTitle, animation, ...document.querySelectorAll<HTMLInputElement>('input[name="theme"], input[name="layout"]')]) {
   control.addEventListener('input', updateOutput);
 }
 

@@ -8,6 +8,8 @@ describe('parseCardOptions', () => {
     expect(options.itemsToken).toBeNull();
     expect(options.title).toBe('Open Source Contributions');
     expect(options.animated).toBe(true);
+    expect(options.live).toBe(true);
+    expect(options.layout).toBe('rows');
     expect(options.hideTitle).toBe(false);
     expect(options.theme.background).toBe('#0F1B2A');
   });
@@ -18,6 +20,8 @@ describe('parseCardOptions', () => {
       bg_color: '%23abc',
       hide_title: 'true',
       items: 'token',
+      layout: 'compact',
+      live: 'false',
       theme: 'light',
       title: '  My PRs  ',
     });
@@ -25,6 +29,8 @@ describe('parseCardOptions', () => {
     expect(options.theme.background).toBe('#AABBCC');
     expect(options.theme.text).toBe('#1F2328');
     expect(options.animated).toBe(false);
+    expect(options.live).toBe(false);
+    expect(options.layout).toBe('compact');
     expect(options.hideTitle).toBe(true);
     expect(options.title).toBe('My PRs');
   });
