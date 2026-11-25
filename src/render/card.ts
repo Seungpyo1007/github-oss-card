@@ -1,5 +1,5 @@
 import type { CardTheme, Contribution, RenderOptions } from '../types.js';
-import { renderStatusBadge, statusBadgeWidth } from './status.js';
+import { renderStatusBadge, statusBadgeWidth, statusStyles } from './status.js';
 
 const CARD_WIDTH = 960;
 const PADDING = 28;
@@ -132,6 +132,173 @@ function renderCompactRow(item: Contribution, index: number, top: number, option
 </g>`;
 }
 
+// The grouped layout mirrors Tech Stack Card's rows so the two cards sit well
+// together: a label column per repository, hairline separators between groups
+// and one plain line per pull request.
+const GROUP_EDGE = 18;
+const GROUP_LABEL_WIDTH = 236;
+const GROUP_MIN_HEIGHT = 62;
+const GROUP_PADDING = 15;
+const ENTRY_HEIGHT = 32;
+const ENTRY_GAP = 0;
+
+interface RepositoryGroup {
+  items: Contribution[];
+  repo: string;
+  stars?: number;
+}
+
+function groupByRepository(items: Contribution[]): RepositoryGroup[] {
+  const groups = new Map<string, RepositoryGroup>();
+  for (const item of items) {
+    const key = item.repo.toLowerCase();
+    const group = groups.get(key) ?? { items: [], repo: item.repo };
+    group.items.push(item);
+    if (group.stars === undefined && item.stars !== undefined) group.stars = item.stars;
+    groups.set(key, group);
+  }
+  return [...groups.values()];
+}
+
+function groupHeight(group: RepositoryGroup): number {
+  const count = group.items.length;
+  return Math.max(GROUP_MIN_HEIGHT, count * ENTRY_HEIGHT + (count - 1) * ENTRY_GAP + GROUP_PADDING * 2);
+}
+
+const STATUS_TILE = 26;
+
+// A small bordered tile holding the state icon, like a miniature Tech Stack
+// Card logo tile. The state name stays available to screen readers and hover.
+function renderStatusTile(item: Contribution, x: number, y: number, size: number, theme: CardTheme): string {
+  const style = statusStyles[item.status];
+  const icon = Math.round(size * 0.56);
+  const offset = (size - icon) / 2;
+  return `<rect x="${x}" y="${y}" width="${size}" height="${size}" rx="${Math.round(size * 0.28)}" fill="${theme.tile}" stroke="${theme.border}" stroke-opacity="0.28"><title>${style.label}</title></rect>
+    <path transform="translate(${x + offset} ${y + offset}) scale(${icon / 16})" fill="${style.color}" d="${style.path}"/>`;
+}
+
+function renderEntry(item: Contribution, x: number, y: number, right: number, theme: CardTheme): string {
+  const baseline = y + ENTRY_HEIGHT / 2 + 5;
+  const textX = x + STATUS_TILE + 12;
+  const numberLabel = item.number === undefined ? '' : `#${item.number}`;
+  const titleUnits = Math.floor((right - (item.date ? 96 : 0) - textX - (numberLabel ? numberLabel.length * 8.2 + 10 : 0) - 10) / 7.2);
+  const title = item.title && titleUnits >= 8 ? truncateUnits(item.title, titleUnits) : '';
+  const number = numberLabel ? `<tspan fill="${theme.border}" font-weight="700">${numberLabel}</tspan>` : '';
+  const titleSpan = title ? `<tspan fill="${theme.text}" fill-opacity="0.85"${numberLabel ? ' dx="10"' : ''}>${escapeXml(title)}</tspan>` : '';
+  const date = item.date
+    ? `
+    <text x="${right}" y="${baseline}" text-anchor="end" fill="${theme.text}" fill-opacity="0.5" font-family="${MONO}" font-size="12">${item.date}</text>`
+    : '';
+  return `
+    ${renderStatusTile(item, x, y + (ENTRY_HEIGHT - STATUS_TILE) / 2, STATUS_TILE, theme)}
+    <text x="${textX}" y="${baseline}" font-family="${FONT}" font-size="14">${number}${titleSpan}</text>${date}`;
+}
+
+const CHIP_HEIGHT = 40;
+const CHIP_GAP = 12;
+const SQUARE = 54;
+
+type ChipStyle = 'number' | 'square' | 'title';
+
+// Pull requests as tiles in a row, the way Tech Stack Card lays out logos.
+function renderChips(items: Contribution[], x: number, top: number, right: number, theme: CardTheme, chip: ChipStyle): { height: number; svg: string } {
+  const tileHeight = chip === 'square' ? SQUARE : CHIP_HEIGHT;
+  const gap = chip === 'square' ? 15 : CHIP_GAP;
+  let cursor = x;
+  let line = 0;
+  const parts = items.map((item) => {
+    const width = chip === 'square' ? SQUARE
+      : chip === 'title' ? Math.floor((right - x - gap) / 2)
+        : item.number === undefined ? CHIP_HEIGHT : Math.round(40 + String(item.number).length * 8.6 + 20);
+    if (cursor + width > right + 1 && cursor > x) {
+      cursor = x;
+      line += 1;
+    }
+    const y = top + line * (tileHeight + gap);
+    const style = statusStyles[item.status];
+    const hover = escapeXml([item.title, style.label, item.date].filter(Boolean).join(' · '));
+    const numberLabel = item.number === undefined ? '' : `#${item.number}`;
+    let inner: string;
+    if (chip === 'square') {
+      const icon = numberLabel ? 20 : 26;
+      const iconY = numberLabel ? y + 9 : y + (SQUARE - icon) / 2;
+      inner = `<path transform="translate(${cursor + (SQUARE - icon) / 2} ${iconY}) scale(${icon / 16})" fill="${style.color}" d="${style.path}"/>${numberLabel ? `
+    <text x="${cursor + SQUARE / 2}" y="${y + 45}" text-anchor="middle" fill="${theme.text}" fill-opacity="0.85" font-family="${FONT}" font-size="11" font-weight="600">${numberLabel}</text>` : ''}`;
+    } else {
+      const textX = cursor + 38;
+      const titleUnits = Math.floor((width - 38 - 14 - (numberLabel ? numberLabel.length * 8.6 + 8 : 0)) / 7);
+      const title = chip === 'title' && item.title ? truncateUnits(item.title, titleUnits) : '';
+      const number = numberLabel ? `<tspan fill="${chip === 'title' ? theme.border : theme.text}" font-weight="${chip === 'title' ? 700 : 600}">${numberLabel}</tspan>` : '';
+      const titleSpan = title ? `<tspan fill="${theme.text}" fill-opacity="0.85" font-size="13"${numberLabel ? ' dx="8"' : ''}>${escapeXml(title)}</tspan>` : '';
+      inner = `<path transform="translate(${cursor + (numberLabel || title ? 14 : 12)} ${y + 12})" fill="${style.color}" d="${style.path}"/>
+    <text x="${textX}" y="${y + CHIP_HEIGHT / 2 + 5}" font-family="${FONT}" font-size="14">${number}${titleSpan}</text>`;
+    }
+    const svg = `
+    <g><title>${hover}</title>
+    <rect x="${cursor}" y="${y}" width="${width}" height="${tileHeight}" rx="12" fill="${theme.tile}" stroke="${theme.border}" stroke-opacity="0.28"/>
+    ${inner}
+    </g>`;
+    cursor += width + gap;
+    return svg;
+  });
+  return { height: (line + 1) * tileHeight + line * gap, svg: parts.join('') };
+}
+
+function renderGroupedCard(items: Contribution[], options: RenderOptions, label: string, summary: string): string {
+  const { theme } = options;
+  const groups = groupByRepository(items);
+  const chipStyle: ChipStyle | null = options.layout === 'tiles' ? 'number' : options.layout === 'tiles-title' ? 'title' : options.layout === 'tiles-square' ? 'square' : null;
+  const entryX = GROUP_EDGE + GROUP_LABEL_WIDTH;
+  const entryRight = CARD_WIDTH - 24;
+  const chips = groups.map((group) => (chipStyle ? renderChips(group.items, entryX, 0, entryRight, theme, chipStyle) : null));
+  const heights = groups.map((group, index) => (chips[index] ? Math.max(76, chips[index].height + (chipStyle === 'square' ? 32 : 36)) : groupHeight(group)));
+  const titleHeight = options.hideTitle ? 0 : 56;
+  const height = 20 + titleHeight + heights.reduce((total, value) => total + value, 0);
+  const parts = [
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${CARD_WIDTH}" height="${height}" viewBox="0 0 ${CARD_WIDTH} ${height}" role="img" aria-label="${label}">`,
+    `<title>${label}</title>`,
+    renderAnimationStyles(options.animated),
+    `<rect x="1" y="1" width="${CARD_WIDTH - 2}" height="${height - 2}" rx="16" fill="${theme.background}" stroke="${theme.border}" stroke-width="2"/>`,
+  ];
+  if (options.animated) {
+    parts.push(`<rect class="border-shimmer" x="2" y="2" width="${CARD_WIDTH - 4}" height="${height - 4}" rx="15" pathLength="100" stroke="${theme.accent}"/>`);
+  }
+
+  let top = 10;
+  if (!options.hideTitle) {
+    parts.push(`<g${options.animated ? ' class="card-title-motion"' : ''}>
+  <text x="24" y="43" fill="${theme.text}" font-family="${FONT}" font-size="22" font-weight="700">${escapeXml(options.title)}</text>
+  <text x="${CARD_WIDTH - 24}" y="43" text-anchor="end" fill="${theme.text}" fill-opacity="0.6" font-family="${MONO}" font-size="12">${escapeXml(summary.toUpperCase())}</text>
+  <line x1="${GROUP_EDGE}" y1="${top + titleHeight}" x2="${CARD_WIDTH - GROUP_EDGE}" y2="${top + titleHeight}" stroke="${theme.accent}" stroke-opacity="0.22"/>
+</g>`);
+    top += titleHeight;
+  }
+
+  groups.forEach((group, index) => {
+    const rowHeight = heights[index] ?? GROUP_MIN_HEIGHT;
+    const separator = index === 0 ? '' : `
+  <line x1="${GROUP_EDGE}" y1="${top}" x2="${CARD_WIDTH - GROUP_EDGE}" y2="${top}" stroke="${theme.accent}" stroke-opacity="0.22"/>`;
+    const starsLabel = group.stars === undefined ? '' : `★ ${formatStars(group.stars)}`;
+    const nameUnits = Math.floor((GROUP_LABEL_WIDTH - 24 - (starsLabel ? starsLabel.length * 7.4 + 10 : 0)) / 9.9);
+    const name = truncateUnits(group.repo.slice(group.repo.indexOf('/') + 1), nameUnits);
+    const stars = starsLabel ? `<tspan fill="${theme.text}" fill-opacity="0.55" font-size="12.5" font-weight="400" dx="9">${starsLabel}</tspan>` : '';
+    const block = group.items.length * ENTRY_HEIGHT + (group.items.length - 1) * ENTRY_GAP;
+    const entriesTop = top + (rowHeight - block) / 2;
+    const chip = chips[index];
+    const entries = chip && chipStyle
+      ? renderChips(group.items, entryX, top + (rowHeight - chip.height) / 2, entryRight, theme, chipStyle).svg
+      : group.items.map((item, itemIndex) => renderEntry(item, entryX, entriesTop + itemIndex * (ENTRY_HEIGHT + ENTRY_GAP), entryRight, theme)).join('');
+    const motion = options.animated ? ` class="contribution-row" style="animation-delay:${140 + index * 110}ms"` : '';
+    parts.push(`<g${motion}>${separator}
+  <text x="24" y="${top + rowHeight / 2 + 6}" fill="${theme.accent}" font-family="${FONT}" font-size="18" font-weight="600">${escapeXml(name)}${stars}</text>${entries}
+</g>`);
+    top += rowHeight;
+  });
+
+  parts.push('</svg>');
+  return parts.join('\n');
+}
+
 export function renderCard(items: Contribution[], options: RenderOptions): string {
   const { theme } = options;
   const compact = options.layout === 'compact';
@@ -144,6 +311,8 @@ export function renderCard(items: Contribution[], options: RenderOptions): strin
   const repositories = new Set(items.map((item) => item.repo.toLowerCase())).size;
   const summary = `${items.length} contribution${items.length === 1 ? '' : 's'} · ${repositories} repo${repositories === 1 ? '' : 's'}`;
   const label = escapeXml(`${options.title}: ${summary}`);
+
+  if (options.layout !== 'rows' && options.layout !== 'compact' && items.length > 0) return renderGroupedCard(items, options, label, summary);
 
   const parts = [
     `<svg xmlns="http://www.w3.org/2000/svg" width="${CARD_WIDTH}" height="${height}" viewBox="0 0 ${CARD_WIDTH} ${height}" role="img" aria-label="${label}">`,

@@ -31,6 +31,8 @@ describe('parseCardOptions', () => {
     expect(options.animated).toBe(false);
     expect(options.live).toBe(false);
     expect(options.layout).toBe('compact');
+    for (const layout of ['grouped', 'tiles', 'tiles-title', 'tiles-square']) expect(parseCardOptions({ layout }).layout).toBe(layout);
+    expect(parseCardOptions({ layout: 'nope' }).layout).toBe('rows');
     expect(options.hideTitle).toBe(true);
     expect(options.title).toBe('My PRs');
   });

@@ -2,6 +2,14 @@
 
 All notable changes to this project are documented in this file.
 
+## [2.2.0] - 2026-11-26
+
+### Added
+
+- `layout=grouped`: pull requests listed under their repository, in the row style of Tech Stack Card
+- `layout=tiles`, `tiles-title` and `tiles-square`: pull requests as tiles, the way Tech Stack Card lays out logos
+- Layout picker in the builder for all six layouts
+
 ## [2.1.0] - 2026-11-25
 
 ### Fixed

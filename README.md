@@ -27,7 +27,7 @@ An animated SVG card of the open source pull requests you are proud of, for your
 - Visual builder: add up to 10 contributions, reorder them, and see the card update live.
 - Each row takes a repository plus optional PR number, title, star count, date and status.
 - Star counts stay current: the card asks GitHub for the live number every time it is rendered.
-- `compact` layout for long lists: one line per contribution.
+- Six layouts, from the detailed default to tile rows that sit next to Tech Stack Card.
 - One-click **Fill from GitHub** in the builder pulls stars, title, date and state for a row.
 - GitHub-style state badges with Octicons: Merged, Open, Closed and Draft.
 - Everything is encoded in the card URL. No sign-in, nothing stored on a server.
@@ -54,7 +54,7 @@ Without `items`, the API renders an example card.
 |---|---|---|
 | `items` | example card | Contributions token made by the builder (see below) |
 | `theme` | `shiny` | `shiny`, `github_dark`, `light` |
-| `layout` | `rows` | `compact` puts each contribution on one line, roughly halving the card height |
+| `layout` | `rows` | `rows`, `compact`, `grouped`, `tiles`, `tiles-title` or `tiles-square` (see [Layouts](#layouts)) |
 | `title` | `Open Source Contributions` | Card title, up to 48 characters |
 | `hide_title` | `false` | Hide the header line |
 | `animation` | `true` | `false` disables motion |
@@ -97,6 +97,20 @@ therefore asks the GitHub API for fresh values:
 
 GitHub responses are cached in memory for 30 minutes. If GitHub is slow, rate limited or down, the card
 falls back to the values in the token instead of failing. Pass `live=false` to turn this off.
+
+## Layouts
+
+| Layout | What it shows |
+|---|---|
+| `rows` | Default. One two-line row per contribution with the full state badge |
+| `compact` | One line per contribution, roughly half the height of `rows` |
+| `grouped` | Pull requests listed under their repository, one line each with a small state icon |
+| `tiles` | Each repository is a row of tiles showing the state icon and PR number |
+| `tiles-title` | Like `tiles`, with a shortened title inside each tile |
+| `tiles-square` | Square tiles the size of Tech Stack Card's logo tiles |
+
+`grouped` and the `tiles` layouts group by repository and follow the row style of
+[Tech Stack Card](https://github.com/Seungpyo1007/github-tech-stack-card), so the two cards line up when stacked.
 
 ## Themes
 
