@@ -6,7 +6,8 @@ export interface CardTheme {
   tile: string;
 }
 
-export type CardLayout = 'rows' | 'compact';
+export const cardLayouts = ['rows', 'compact', 'grouped', 'tiles', 'tiles-title', 'tiles-square'] as const;
+export type CardLayout = (typeof cardLayouts)[number];
 
 export interface RenderOptions {
   animated: boolean;
