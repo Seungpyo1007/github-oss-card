@@ -65,6 +65,7 @@ function cardUrl(): string {
   if (items.length > 0) params.set('items', encodeContributions(items));
   const theme = document.querySelector<HTMLInputElement>('input[name="theme"]:checked')?.value ?? 'shiny';
   if (theme !== 'shiny') params.set('theme', theme);
+  if (document.querySelector<HTMLInputElement>('input[name="layout"]:checked')?.value === 'compact') params.set('layout', 'compact');
   const title = titleInput.value.trim();
   if (title && title !== defaultTitle) params.set('title', title);
   if (hideTitle.checked) params.set('hide_title', 'true');
@@ -201,7 +202,7 @@ addButton.addEventListener('click', () => {
   renderRows(row.id);
 });
 
-for (const control of [titleInput, hideTitle, animation, ...document.querySelectorAll<HTMLInputElement>('input[name="theme"]')]) {
+for (const control of [titleInput, hideTitle, animation, ...document.querySelectorAll<HTMLInputElement>('input[name="theme"], input[name="layout"]')]) {
   control.addEventListener('input', updateOutput);
 }
 

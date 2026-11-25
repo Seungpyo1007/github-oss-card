@@ -52,6 +52,7 @@ export function parseCardOptions(query: CardQuery): CardRequestOptions {
     animated: parseEnabled(query.animation),
     hideTitle: parseBoolean(query.hide_title),
     itemsToken: first(query.items) ?? null,
+    layout: first(query.layout) === 'compact' ? 'compact' : 'rows',
     live: parseEnabled(query.live),
     theme: withCustomColors(getTheme(first(query.theme) ?? 'shiny'), query),
     title: parseTitle(query.title),

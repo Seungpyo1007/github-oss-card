@@ -6,9 +6,12 @@ export interface CardTheme {
   tile: string;
 }
 
+export type CardLayout = 'rows' | 'compact';
+
 export interface RenderOptions {
   animated: boolean;
   hideTitle: boolean;
+  layout: CardLayout;
   theme: CardTheme;
   title: string;
 }

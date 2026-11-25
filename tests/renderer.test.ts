@@ -10,6 +10,27 @@ import { statusStyles } from '../src/render/status.js';
 const options = parseCardOptions({ animation: 'false' });
 
 describe('SVG card renderer', () => {
+  it('renders a shorter single-line card with layout=compact', async () => {
+    const compact = parseCardOptions({ animation: 'false', layout: 'compact' });
+    const svg = renderCard(sampleContributions, compact);
+    expect(XMLValidator.validate(svg)).toBe(true);
+    const full = await sharp(Buffer.from(renderCard(sampleContributions, options))).metadata();
+    const small = await sharp(Buffer.from(svg)).metadata();
+    expect(small.width).toBe(960);
+    expect(small.height).toBeLessThan(full.height * 0.7);
+    for (const expected of ['ahujasid/mcp-for-blender', '★ 29.2k', '#1199', '2026-08-20', 'Merged']) expect(svg).toContain(expected);
+  });
+
+  it('shortens long compact titles, counting wide characters double', () => {
+    const compact = parseCardOptions({ animation: 'false', layout: 'compact' });
+    const long = renderCard([{ number: 1, repo: 'owner/a-rather-long-repository-name', stars: 12345, status: 'merged', title: 'x'.repeat(100) }], compact);
+    const wide = renderCard([{ number: 1, repo: 'owner/a-rather-long-repository-name', stars: 12345, status: 'merged', title: '가'.repeat(100) }], compact);
+    const shown = (svg: string, character: string) => svg.match(new RegExp(`${character}+…`))?.[0].length ?? 0;
+    expect(shown(long, 'x')).toBeGreaterThan(20);
+    expect(shown(long, 'x')).toBeLessThan(100);
+    expect(shown(wide, '가')).toBeLessThan(shown(long, 'x') * 0.6);
+  });
+
   it('renders a valid card that rasterizes', async () => {
     const svg = renderCard(sampleContributions, options);
     expect(XMLValidator.validate(svg)).toBe(true);
