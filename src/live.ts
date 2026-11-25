@@ -1,7 +1,7 @@
-import type { Contribution } from './types.js';
+import type { Contribution, ContributionStatus } from './types.js';
 
-// Star counts baked into the `items` token go stale the moment the card is
-// published. This module refreshes them from the GitHub API
+// Star counts and pull request states baked into the `items` token go stale the
+// moment the card is published. This module refreshes them from the GitHub API
 // at render time and falls back to the token's values whenever GitHub is slow,
 // rate limited or unreachable, so a card never fails because of it.
 
@@ -16,7 +16,7 @@ type Json = Record<string, unknown>;
 export interface LiveOptions {
   fetch?: typeof fetch;
   now?: () => number;
-  /** Optional GitHub token. Raises the rate limit. */
+  /** Optional GitHub token. Raises the rate limit and enables pull request state refresh. */
   token?: string | undefined;
 }
 
@@ -63,21 +63,43 @@ function starsFrom(repository: Json | null): number | undefined {
   return typeof stars === 'number' && Number.isInteger(stars) && stars >= 0 ? stars : undefined;
 }
 
+export function pullRequestStatus(pull: Json | null): ContributionStatus | undefined {
+  if (!pull || typeof pull.state !== 'string') return undefined;
+  if (pull.merged === true || typeof pull.merged_at === 'string') return 'merged';
+  if (pull.state === 'closed') return 'closed';
+  if (pull.state === 'open') return pull.draft === true ? 'draft' : 'open';
+  return undefined;
+}
+
 /**
- * Returns a copy of `items` with live star counts from GitHub, for every item
- * that already shows a star count. Anything that cannot be fetched keeps the
- * value from the token.
+ * Returns a copy of `items` with fresh data from GitHub.
+ *
+ * - `stars` is refreshed for every item that already shows a star count.
+ * - `status` is refreshed for items with a PR number, but only when a token is
+ *   configured: one extra request per pull request does not fit in GitHub's
+ *   unauthenticated rate limit.
+ *
+ * Anything that cannot be fetched keeps the value from the token.
  */
 export async function refreshContributions(items: Contribution[], options: LiveOptions = {}): Promise<Contribution[]> {
-  const repoPath = (item: Contribution): string => `/repos/${item.repo.toLowerCase()}`;
-  const paths = [...new Set(items.filter((item) => item.stars !== undefined).map(repoPath))];
+  const repoPaths = new Set<string>();
+  const pullPaths = new Set<string>();
+  for (const item of items) {
+    if (item.stars !== undefined) repoPaths.add(`/repos/${item.repo.toLowerCase()}`);
+    if (options.token && item.number !== undefined) pullPaths.add(`/repos/${item.repo.toLowerCase()}/pulls/${item.number}`);
+  }
+  const paths = [...repoPaths, ...pullPaths];
   if (paths.length === 0) return items;
 
   const signal = AbortSignal.timeout(REQUEST_TIMEOUT_MS);
   const results = await Promise.all(paths.map((path) => getJson(path, signal, options)));
   const byPath = new Map(paths.map((path, index) => [path, results[index] ?? null]));
 
-  return items.map((item) => (item.stars === undefined
-    ? item
-    : { ...item, stars: starsFrom(byPath.get(repoPath(item)) ?? null) ?? item.stars }));
+  return items.map((item) => {
+    const repoPath = `/repos/${item.repo.toLowerCase()}`;
+    const next: Contribution = { ...item };
+    if (item.stars !== undefined) next.stars = starsFrom(byPath.get(repoPath) ?? null) ?? item.stars;
+    if (item.number !== undefined) next.status = pullRequestStatus(byPath.get(`${repoPath}/pulls/${item.number}`) ?? null) ?? item.status;
+    return next;
+  });
 }

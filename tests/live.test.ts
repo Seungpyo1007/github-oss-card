@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { clearLiveCache, refreshContributions } from '../src/live.js';
+import { clearLiveCache, pullRequestStatus, refreshContributions } from '../src/live.js';
 import type { Contribution } from '../src/types.js';
 
 type Routes = Record<string, unknown>;
@@ -47,6 +47,24 @@ describe('refreshContributions', () => {
     expect((await refreshContributions(items, { fetch }))[0]?.stars).toBe(29925);
   });
 
+  it('refreshes pull request states only when a token is configured', async () => {
+    const routes = {
+      '/repos/ahujasid/mcp-for-blender': { stargazers_count: 35649 },
+      '/repos/ahujasid/mcp-for-blender/pulls/342': { merged: true, state: 'closed' },
+    };
+    const anonymous = fakeFetch(routes);
+    expect((await refreshContributions(items, { fetch: anonymous }))[1]?.status).toBe('open');
+
+    clearLiveCache();
+    const authenticated = fakeFetch(routes);
+    const refreshed = await refreshContributions(items, { fetch: authenticated, token: 'test-token' });
+    expect(refreshed[1]?.status).toBe('merged');
+    // #344 is missing from the fake API, so it keeps its own state.
+    expect(refreshed[0]?.status).toBe('merged');
+    const [, init] = authenticated.mock.calls[0] as unknown as [string, RequestInit];
+    expect((init.headers as Record<string, string>).Authorization).toBe('Bearer test-token');
+  });
+
   it('caches responses between renders', async () => {
     const fetch = fakeFetch({ '/repos/ahujasid/mcp-for-blender': { stargazers_count: 35649 } });
     let now = 0;
@@ -64,5 +82,16 @@ describe('refreshContributions', () => {
     const plain: Contribution[] = [{ repo: 'octocat/hello-world', status: 'merged' }];
     expect(await refreshContributions(plain, { fetch })).toBe(plain);
     expect(fetch).not.toHaveBeenCalled();
+  });
+});
+
+describe('pullRequestStatus', () => {
+  it('maps GitHub pull request fields to a card state', () => {
+    expect(pullRequestStatus({ merged: true, state: 'closed' })).toBe('merged');
+    expect(pullRequestStatus({ merged_at: '2026-09-15T00:00:00Z', state: 'closed' })).toBe('merged');
+    expect(pullRequestStatus({ merged: false, state: 'closed' })).toBe('closed');
+    expect(pullRequestStatus({ draft: true, state: 'open' })).toBe('draft');
+    expect(pullRequestStatus({ draft: false, state: 'open' })).toBe('open');
+    expect(pullRequestStatus(null)).toBeUndefined();
   });
 });
