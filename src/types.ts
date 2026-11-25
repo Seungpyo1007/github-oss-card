@@ -15,6 +15,7 @@ export interface RenderOptions {
 
 export interface CardRequestOptions extends RenderOptions {
   itemsToken: string | null;
+  live: boolean;
 }
 
 export type ContributionStatus = 'merged' | 'open' | 'closed' | 'draft';

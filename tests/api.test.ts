@@ -1,8 +1,9 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import handler from '../api/card.js';
 import { encodeContributions } from '../src/contributions.js';
+import { clearLiveCache } from '../src/live.js';
 
 interface ResponseState {
   body: string;
@@ -34,9 +35,20 @@ function request(method: string, query: VercelRequest['query'] = {}): VercelRequ
 }
 
 describe('card API', () => {
-  it('renders the sample card without a token', () => {
+  // The handler asks GitHub for live star counts; tests never touch the network.
+  const githubFetch = vi.fn(async () => new Response('{}', { status: 404 }));
+
+  beforeEach(() => {
+    clearLiveCache();
+    githubFetch.mockClear();
+    vi.stubGlobal('fetch', githubFetch);
+  });
+
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('renders the sample card without a token', async () => {
     const { response, state } = mockResponse();
-    handler(request('GET'), response);
+    await handler(request('GET'), response);
 
     expect(state.statusCode).toBe(200);
     expect(state.headers['Content-Type']).toBe('image/svg+xml; charset=utf-8');
@@ -44,25 +56,48 @@ describe('card API', () => {
     expect(state.body).toContain('ahujasid/mcp-for-blender');
   });
 
-  it('renders the items from the token', () => {
+  it('renders the items from the token', async () => {
     const { response, state } = mockResponse();
-    handler(request('GET', { items: encodeContributions([{ number: 7, repo: 'octocat/hello-world', status: 'merged' }]) }), response);
+    await handler(request('GET', { items: encodeContributions([{ number: 7, repo: 'octocat/hello-world', status: 'merged' }]) }), response);
     expect(state.statusCode).toBe(200);
     expect(state.body).toContain('octocat/hello-world');
     expect(state.body).not.toContain('mcp-for-blender');
   });
 
-  it('returns an SVG error for a bad token', () => {
+  it('returns an SVG error for a bad token', async () => {
     const { response, state } = mockResponse();
-    handler(request('GET', { items: 'garbage' }), response);
+    await handler(request('GET', { items: 'garbage' }), response);
     expect(state.statusCode).toBe(400);
     expect(state.body).toContain('Invalid contributions');
   });
 
-  it('rejects non-GET requests', () => {
+  it('rejects non-GET requests', async () => {
     const { response, state } = mockResponse();
-    handler(request('POST'), response);
+    await handler(request('POST'), response);
     expect(state.statusCode).toBe(405);
     expect(state.headers.Allow).toBe('GET');
+  });
+
+  it('shows the live star count instead of the one in the token', async () => {
+    githubFetch.mockResolvedValueOnce(new Response(JSON.stringify({ stargazers_count: 35649 }), { status: 200 }));
+    const { response, state } = mockResponse();
+    await handler(request('GET', { items: encodeContributions([{ repo: 'ahujasid/mcp-for-blender', stars: 29925, status: 'merged' }]) }), response);
+    expect(state.statusCode).toBe(200);
+    expect(state.body).toContain('★ 35.6k');
+    expect(state.body).not.toContain('29.9k');
+  });
+
+  it('falls back to the token star count when GitHub is unavailable', async () => {
+    const { response, state } = mockResponse();
+    await handler(request('GET', { items: encodeContributions([{ repo: 'ahujasid/mcp-for-blender', stars: 29925, status: 'merged' }]) }), response);
+    expect(state.statusCode).toBe(200);
+    expect(state.body).toContain('★ 29.9k');
+  });
+
+  it('skips GitHub entirely with live=false', async () => {
+    const { response, state } = mockResponse();
+    await handler(request('GET', { live: 'false' }), response);
+    expect(state.statusCode).toBe(200);
+    expect(githubFetch).not.toHaveBeenCalled();
   });
 });

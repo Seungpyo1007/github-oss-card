@@ -23,7 +23,8 @@ function parseBoolean(value: QueryValue): boolean {
   return ['1', 'true', 'yes'].includes((first(value) ?? '').toLowerCase());
 }
 
-function parseAnimation(value: QueryValue): boolean {
+// For flags that are on unless explicitly switched off (`animation`, `live`).
+function parseEnabled(value: QueryValue): boolean {
   return !['0', 'false', 'no', 'none'].includes((first(value) ?? '').toLowerCase());
 }
 
@@ -48,9 +49,10 @@ function parseTitle(value: QueryValue): string {
 
 export function parseCardOptions(query: CardQuery): CardRequestOptions {
   return {
-    animated: parseAnimation(query.animation),
+    animated: parseEnabled(query.animation),
     hideTitle: parseBoolean(query.hide_title),
     itemsToken: first(query.items) ?? null,
+    live: parseEnabled(query.live),
     theme: withCustomColors(getTheme(first(query.theme) ?? 'shiny'), query),
     title: parseTitle(query.title),
   };
