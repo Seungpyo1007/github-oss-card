@@ -1,5 +1,6 @@
 import { getTheme } from './themes.js';
-import type { CardRequestOptions, CardTheme } from './types.js';
+import { cardLayouts } from './types.js';
+import type { CardLayout, CardRequestOptions, CardTheme } from './types.js';
 
 type QueryValue = string | string[] | undefined;
 export type CardQuery = Record<string, QueryValue>;
@@ -39,6 +40,11 @@ function withCustomColors(theme: CardTheme, query: CardQuery): CardTheme {
   };
 }
 
+function parseLayout(value: QueryValue): CardLayout {
+  const layout = first(value) as CardLayout;
+  return cardLayouts.includes(layout) ? layout : 'rows';
+}
+
 function parseTitle(value: QueryValue): string {
   const title = [...(first(value) ?? defaultTitle)]
     .filter((character) => character.charCodeAt(0) >= 32 && character.charCodeAt(0) !== 127)
@@ -52,7 +58,7 @@ export function parseCardOptions(query: CardQuery): CardRequestOptions {
     animated: parseEnabled(query.animation),
     hideTitle: parseBoolean(query.hide_title),
     itemsToken: first(query.items) ?? null,
-    layout: first(query.layout) === 'compact' ? 'compact' : 'rows',
+    layout: parseLayout(query.layout),
     live: parseEnabled(query.live),
     theme: withCustomColors(getTheme(first(query.theme) ?? 'shiny'), query),
     title: parseTitle(query.title),

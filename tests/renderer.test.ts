@@ -21,6 +21,54 @@ describe('SVG card renderer', () => {
     for (const expected of ['ahujasid/mcp-for-blender', '★ 29.2k', '#1199', '2026-08-20', 'Merged']) expect(svg).toContain(expected);
   });
 
+  it('groups contributions by repository with layout=grouped', async () => {
+    const grouped = parseCardOptions({ animation: 'false', layout: 'grouped' });
+    const svg = renderCard(sampleContributions, grouped);
+    expect(XMLValidator.validate(svg)).toBe(true);
+    expect((await sharp(Buffer.from(svg)).metadata()).width).toBe(960);
+    // Two pull requests share one repository label and one star count.
+    expect(svg.match(/>mcp-for-blender</g)).toHaveLength(1);
+    expect(svg).toContain('>python-docs-ko<');
+    expect(svg.match(/★ 29\.2k/g)).toHaveLength(1);
+    for (const expected of ['#344', '#342', '#1199', '2026-08-20']) expect(svg).toContain(expected);
+    // Repositories are matched case-insensitively and keep first-seen order.
+    const mixed = renderCard([
+      { number: 1, repo: 'Octo/Repo', status: 'merged' },
+      { number: 2, repo: 'other/thing', status: 'open' },
+      { number: 3, repo: 'octo/repo', status: 'draft' },
+    ], grouped);
+    expect(mixed.match(/>Repo</g)).toHaveLength(1);
+    expect(mixed).not.toContain('>repo<');
+    expect(mixed.indexOf('#3')).toBeLessThan(mixed.indexOf('#2'));
+  });
+
+  it('renders pull requests as tiles in the three tiles layouts', async () => {
+    const heights: Record<string, number> = {};
+    for (const layout of ['tiles', 'tiles-title', 'tiles-square']) {
+      const svg = renderCard(sampleContributions, parseCardOptions({ animation: 'false', layout }));
+      expect(XMLValidator.validate(svg)).toBe(true);
+      const metadata = await sharp(Buffer.from(svg)).metadata();
+      expect(metadata.width).toBe(960);
+      heights[layout] = metadata.height;
+      expect(svg.match(/>mcp-for-blender</g)).toHaveLength(1);
+      for (const expected of ['#344', '#342', '#1199']) expect(svg).toContain(expected);
+      // Details that are not drawn stay available as the tile's tooltip.
+      expect(svg).toContain('<title>Translate library/bz2 into Korean · Merged · 2026-08-20</title>');
+    }
+    const title = renderCard(sampleContributions, parseCardOptions({ animation: 'false', layout: 'tiles-title' }));
+    const number = renderCard(sampleContributions, parseCardOptions({ animation: 'false', layout: 'tiles' }));
+    expect(title).toContain('>Translate library/bz2 into Korean</tspan>');
+    expect(number).not.toContain('>Translate library/bz2 into Korean</tspan>');
+    expect(heights['tiles-square']).toBeGreaterThan(heights.tiles!);
+  });
+
+  it('wraps tiles onto a new line when a repository has many pull requests', () => {
+    const many = Array.from({ length: 10 }, (_, index) => ({ number: 1000 + index, repo: 'octo/repo', status: 'merged' as const }));
+    const svg = renderCard(many, parseCardOptions({ animation: 'false', layout: 'tiles' }));
+    const tileRows = new Set([...svg.matchAll(/<rect x="\d+" y="([\d.]+)" width="\d+" height="40"/g)].map((match) => match[1]));
+    expect(tileRows.size).toBe(2);
+  });
+
   it('shortens long compact titles, counting wide characters double', () => {
     const compact = parseCardOptions({ animation: 'false', layout: 'compact' });
     const long = renderCard([{ number: 1, repo: 'owner/a-rather-long-repository-name', stars: 12345, status: 'merged', title: 'x'.repeat(100) }], compact);
