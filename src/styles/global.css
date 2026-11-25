@@ -114,6 +114,9 @@ code { padding: .1em .35em; border-radius: 5px; background: rgba(137,207,240,.1)
 .item-actions button:hover:not(:disabled) { border-color: var(--line-strong); color: var(--text); transform: translateY(-1px); }
 .item-actions button[data-action="remove"]:hover { border-color: rgba(255,159,168,.5); color: var(--danger); }
 .item-actions button:disabled { opacity: .3; cursor: default; }
+.item-actions button.is-busy { opacity: 1; animation: fill-spin .8s linear infinite; }
+.item-actions button.is-error { border-color: rgba(255,159,168,.5); color: var(--danger); }
+@keyframes fill-spin { to { transform: rotate(360deg); } }
 .item-grid { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr); gap: 10px; }
 .item-repo, .item-title { grid-column: span 2; }
 .item-title { grid-column: 1 / -1; }
