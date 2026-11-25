@@ -65,7 +65,8 @@ function cardUrl(): string {
   if (items.length > 0) params.set('items', encodeContributions(items));
   const theme = document.querySelector<HTMLInputElement>('input[name="theme"]:checked')?.value ?? 'shiny';
   if (theme !== 'shiny') params.set('theme', theme);
-  if (document.querySelector<HTMLInputElement>('input[name="layout"]:checked')?.value === 'compact') params.set('layout', 'compact');
+  const layout = document.querySelector<HTMLInputElement>('input[name="layout"]:checked')?.value ?? 'rows';
+  if (layout !== 'rows') params.set('layout', layout);
   const title = titleInput.value.trim();
   if (title && title !== defaultTitle) params.set('title', title);
   if (hideTitle.checked) params.set('hide_title', 'true');
