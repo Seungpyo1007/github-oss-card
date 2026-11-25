@@ -2,6 +2,20 @@
 
 All notable changes to this project are documented in this file.
 
+## [2.1.0] - 2026-11-25
+
+### Fixed
+
+- Star counts no longer freeze at the number stored in the card URL (for example `29.9k` forever). The card now fetches the live count from GitHub when it is rendered and uses the stored number only as a fallback.
+
+### Added
+
+- Live pull request states (`open` → `merged`, and so on) when the deployment has a `GITHUB_TOKEN`
+- `layout=compact`: one line per contribution, about half the height of the default card
+- `live=false` to render the token values as they are
+- **Fill from GitHub** button on each builder row: fills stars, title, date and state from the repository and PR number
+- Optional `GITHUB_TOKEN` environment variable for a higher GitHub rate limit
+
 ## [2.0.2] - 2026-09-22
 
 ### Changed
