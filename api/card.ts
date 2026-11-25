@@ -1,6 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 import { decodeContributions, sampleContributions } from '../src/contributions.js';
+import { refreshContributions } from '../src/live.js';
 import { parseCardOptions } from '../src/options.js';
 import { renderCard, renderErrorCard } from '../src/render/card.js';
 
@@ -20,7 +21,7 @@ function applyHeaders(response: VercelResponse): void {
   response.setHeader('Access-Control-Allow-Origin', '*');
 }
 
-export default function handler(request: VercelRequest, response: VercelResponse): void {
+export default async function handler(request: VercelRequest, response: VercelResponse): Promise<void> {
   const options = parseCardOptions(request.query);
   applyHeaders(response);
 
@@ -39,6 +40,8 @@ export default function handler(request: VercelRequest, response: VercelResponse
     }
     items = decoded.items;
   }
+
+  if (options.live) items = await refreshContributions(items, { token: process.env.GITHUB_TOKEN });
 
   response.status(200).send(renderCard(items, options));
 }

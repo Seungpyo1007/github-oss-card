@@ -6,6 +6,8 @@ const PADDING = 28;
 const HEADER_HEIGHT = 64;
 const ROW_HEIGHT = 74;
 const ROW_GAP = 12;
+const COMPACT_ROW_HEIGHT = 40;
+const COMPACT_ROW_GAP = 6;
 const MAX_TITLE_LENGTH = 72;
 const FONT = 'Segoe UI, Arial, sans-serif';
 const MONO = 'ui-monospace, SFMono-Regular, Consolas, monospace';
@@ -32,6 +34,26 @@ export function formatStars(stars: number): string {
 function truncate(value: string, length: number): string {
   const characters = [...value];
   return characters.length > length ? `${characters.slice(0, length - 1).join('')}…` : value;
+}
+
+// SVG cannot measure text, so compact rows estimate it: East Asian wide
+// characters take roughly twice the space of Latin ones.
+function textUnits(value: string): number {
+  let units = 0;
+  for (const character of value) units += /[\u1100-\u11FF\u2E80-\uA4CF\uAC00-\uD7AF\uF900-\uFAFF\uFF00-\uFFEF]/u.test(character) ? 2 : 1;
+  return units;
+}
+
+function truncateUnits(value: string, units: number): string {
+  if (textUnits(value) <= units) return value;
+  let used = 1;
+  let result = '';
+  for (const character of value) {
+    used += textUnits(character);
+    if (used > units) break;
+    result += character;
+  }
+  return `${result.trimEnd()}…`;
 }
 
 function renderAnimationStyles(enabled: boolean): string {
@@ -77,11 +99,48 @@ function renderRow(item: Contribution, index: number, top: number, options: Rend
 </g>`;
 }
 
+// One line per contribution: repository, stars, PR number and title on the
+// left, date and state badge on the right. About half the height of a full row.
+function renderCompactRow(item: Contribution, index: number, top: number, options: RenderOptions): string {
+  const { theme } = options;
+  const motion = options.animated ? ` class="contribution-row" style="animation-delay:${140 + index * 60}ms"` : '';
+  const width = CARD_WIDTH - PADDING * 2;
+  const baseline = top + COMPACT_ROW_HEIGHT / 2 + 5;
+  const right = CARD_WIDTH - PADDING - 12;
+  const left = PADDING + 20;
+  const badgeLeft = right - statusBadgeWidth(item.status);
+  const dateWidth = item.date ? 86 : 0;
+
+  const starsLabel = item.stars === undefined ? '' : `★ ${formatStars(item.stars)}`;
+  const numberLabel = item.number === undefined ? '' : `#${item.number}`;
+  const used = textUnits(item.repo) * 8.4 + (starsLabel ? 10 + starsLabel.length * 7.8 : 0) + (numberLabel ? 14 + numberLabel.length * 7.6 : 0);
+  const titleUnits = Math.floor((badgeLeft - 12 - dateWidth - left - used - 10) / 6.7);
+  const title = item.title && titleUnits >= 8 ? truncateUnits(item.title, titleUnits) : '';
+
+  const stars = starsLabel ? `<tspan fill="${theme.accent}" font-size="13" font-weight="600" dx="10">${starsLabel}</tspan>` : '';
+  const number = numberLabel ? `<tspan fill="${theme.border}" font-size="13" font-weight="700" dx="14">${numberLabel}</tspan>` : '';
+  const titleSpan = title ? `<tspan fill="${theme.text}" fill-opacity="0.72" font-size="13" font-weight="400" dx="${numberLabel ? 6 : 14}">${escapeXml(title)}</tspan>` : '';
+  const date = item.date
+    ? `
+  <text x="${badgeLeft - 12}" y="${baseline}" text-anchor="end" fill="${theme.text}" fill-opacity="0.55" font-family="${MONO}" font-size="12">${item.date}</text>`
+    : '';
+  return `<g${motion}>
+  <rect x="${PADDING}" y="${top}" width="${width}" height="${COMPACT_ROW_HEIGHT}" rx="10" fill="${theme.tile}"/>
+  <rect x="${PADDING}" y="${top + 10}" width="4" height="${COMPACT_ROW_HEIGHT - 20}" rx="2" fill="${index % 2 === 0 ? theme.border : theme.accent}"/>
+  <text x="${left}" y="${baseline}" fill="${theme.text}" font-family="${FONT}" font-size="15" font-weight="700">${escapeXml(item.repo)}${stars}${number}${titleSpan}</text>
+  ${renderStatusBadge(item.status, right, baseline, FONT)}${date}
+</g>`;
+}
+
 export function renderCard(items: Contribution[], options: RenderOptions): string {
   const { theme } = options;
-  const top = options.hideTitle ? PADDING : HEADER_HEIGHT + 8;
+  const compact = options.layout === 'compact';
+  const rowHeight = compact ? COMPACT_ROW_HEIGHT : ROW_HEIGHT;
+  const rowGap = compact ? COMPACT_ROW_GAP : ROW_GAP;
+  const padding = compact ? 20 : PADDING;
+  const top = options.hideTitle ? padding : HEADER_HEIGHT + (compact ? 0 : 8);
   const rows = items.length === 0 ? 1 : items.length;
-  const height = top + rows * ROW_HEIGHT + (rows - 1) * ROW_GAP + PADDING;
+  const height = top + rows * rowHeight + (rows - 1) * rowGap + padding;
   const repositories = new Set(items.map((item) => item.repo.toLowerCase())).size;
   const summary = `${items.length} contribution${items.length === 1 ? '' : 's'} · ${repositories} repo${repositories === 1 ? '' : 's'}`;
   const label = escapeXml(`${options.title}: ${summary}`);
@@ -105,11 +164,12 @@ export function renderCard(items: Contribution[], options: RenderOptions): strin
 
   if (items.length === 0) {
     parts.push(
-      `<text x="${CARD_WIDTH / 2}" y="${top + ROW_HEIGHT / 2 + 6}" text-anchor="middle" fill="${theme.text}" fill-opacity="0.72" font-family="${FONT}" font-size="16">No contributions yet</text>`,
+      `<text x="${CARD_WIDTH / 2}" y="${top + rowHeight / 2 + 6}" text-anchor="middle" fill="${theme.text}" fill-opacity="0.72" font-family="${FONT}" font-size="16">No contributions yet</text>`,
     );
   }
   items.forEach((item, index) => {
-    parts.push(renderRow(item, index, top + index * (ROW_HEIGHT + ROW_GAP), options));
+    const rowTop = top + index * (rowHeight + rowGap);
+    parts.push(compact ? renderCompactRow(item, index, rowTop, options) : renderRow(item, index, rowTop, options));
   });
 
   parts.push('</svg>');
